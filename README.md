@@ -43,3 +43,4 @@ DEV الأجهزة، CON المستهلكات، SPR قطع الغيار، EGC ا
 
 ## حدود حجم البيانات
 البيانات الحالية هي نقطة بداية بحثية صغيرة وليست موسوعة مكتملة. بعض الأسعار وأسماء الشركات والموردين مأخوذة كـ leads أولية وحالتها تحتاج مراجعة؛ لا تُعامل كعروض مؤكدة أو تفويضات معتمدة. التوسع الصحيح يكون بإضافة سجلات موثقة مع مصدر وتاريخ رصد وبلد ومنتج/موديل وحالة تحقق.
+\n\n## Partner overview\nSee [PARTNER_OVERVIEW.md](PARTNER_OVERVIEW.md) for the product scope, data-quality rules, current technical limitations, and production roadmap.\n\n## Interface design\nThe executive interface system is in design-system.css, loaded after the base stylesheet. It provides the responsive navy/ivory/champagne-gold visual identity for desktop and mobile.\n
