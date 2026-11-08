@@ -45,6 +45,9 @@ window.PHYSIO_DATA = {
   ],
   distributors: [],
   quotes: [],
+  prices: [],
+  productLinks: [],
+  retiredCodes: [],
   logistics: [],
   regulatory: [
     {code:"REG-00001",name:"المرجع التنظيمي للأجهزة الطبية – هيئة الدواء المصرية",url:"https://edaegypt.gov.eg/en/the-regulatory-reference-of-the-egyptian-drug-authority-eda/regulatory-guidelines/ca-of-medical-device/",type:"مرجع تنظيمي",status:"reference"},
