@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#10243b">
+  <title>PHYSIO MARKET | منصة ذكاء سوق العلاج الطبيعي</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#" aria-label="Physio Market">
+        <span class="brand-mark">P<span>+</span></span>
+        <span><b>PHYSIO MARKET</b><small>MARKET INTELLIGENCE</small></span>
+      </a>
+      <div class="workspace"><span class="live-dot"></span> مساحة العمل الداخلية</div>
+      <nav id="main-nav">
+        <p class="nav-caption">الرئيسية</p>
+        <button class="nav-link active" data-view="dashboard"><span>▦</span> لوحة المؤشرات</button>
+        <p class="nav-caption">قاعدة السوق</p>
+        <button class="nav-link" data-view="devices"><span>▣</span> الأجهزة والمعدات</button>
+        <button class="nav-link" data-view="consumables"><span>◈</span> المستهلكات والملحقات</button>
+        <button class="nav-link" data-view="companies"><span>▤</span> الشركات المصرية</button>
+        <button class="nav-link" data-view="suppliers"><span>⌂</span> الموردون والمصانع الصينية</button>
+        <button class="nav-link" data-view="brands"><span>◇</span> العلامات التجارية</button>
+        <button class="nav-link" data-view="distributors"><span>⇄</span> الوكلاء والموزعون</button>
+        <p class="nav-caption">التجارة والتوريد</p>
+        <button class="nav-link" data-view="quotes"><span>＄</span> عروض الأسعار</button>
+        <button class="nav-link" data-view="logistics"><span>⇢</span> الشحن والاستيراد</button>
+        <button class="nav-link" data-view="regulatory"><span>▧</span> التسجيل والامتثال</button>
+        <p class="nav-caption">إدارة المعرفة</p>
+        <button class="nav-link" data-view="sources"><span>⌕</span> المصادر والتحقق</button>
+        <button class="nav-link" data-view="codes"><span>#</span> دليل الأكواد</button>
+      </nav>
+      <div class="sidebar-foot"><span class="shield">✓</span><span>نسخة تأسيسية داخلية<small>لا تحتوي على نظام دخول بعد</small></span></div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div><div class="eyebrow">PHYSIOTHERAPY MARKET INTELLIGENCE</div><h1 id="page-title">لوحة المؤشرات</h1></div>
+        <div class="top-actions">
+          <label class="global-search"><span>⌕</span><input id="global-search" type="search" placeholder="ابحث بالاسم أو الكود أو الموديل أو الهاتف..."><kbd>بحث</kbd></label>
+          <span class="user-chip"><i>أ</i><span>مساحة العمل<small>مدير النظام</small></span></span>
+        </div>
+      </header>
+      <section id="app-content" class="content" aria-live="polite"></section>
+      <footer>PHYSIO MARKET <span>•</span> منصة ذكاء سوق العلاج الطبيعي <span class="footer-note">البيانات الأولية تخضع للتحقق قبل الاعتماد التجاري</span></footer>
+    </main>
+  </div>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
