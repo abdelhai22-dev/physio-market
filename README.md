@@ -44,3 +44,13 @@ DEV الأجهزة، CON المستهلكات، SPR قطع الغيار، EGC ا
 ## حدود حجم البيانات
 البيانات الحالية هي نقطة بداية بحثية صغيرة وليست موسوعة مكتملة. بعض الأسعار وأسماء الشركات والموردين مأخوذة كـ leads أولية وحالتها تحتاج مراجعة؛ لا تُعامل كعروض مؤكدة أو تفويضات معتمدة. التوسع الصحيح يكون بإضافة سجلات موثقة مع مصدر وتاريخ رصد وبلد ومنتج/موديل وحالة تحقق.
 \n\n## Partner overview\nSee [PARTNER_OVERVIEW.md](PARTNER_OVERVIEW.md) for the product scope, data-quality rules, current technical limitations, and production roadmap.\n\n## Interface design\nThe executive interface system is in design-system.css, loaded after the base stylesheet. It provides the responsive navy/ivory/champagne-gold visual identity for desktop and mobile.\n
+
+## الهوية البصرية
+- ملف الشعار المتجهي: `assets/as-medical.svg`، وطبقة الهوية: `branding.css`.
+- النسخة المتجهية الحالية إعادة رسم رقمية مستوحاة من الصورة المقدمة؛ يُفضّل استبدالها بالأصل عالي الدقة عند توفيره كملف SVG/PNG قابل للرفع.
+
+## قاعدة البيانات المركزية — تجهيز الربط
+- أُضيف مخطط أولي لجدول مساحة العمل المشتركة في `supabase/workspace.sql` باستخدام JSONB للحفاظ على نموذج البيانات الحالي أثناء الانتقال.
+- انسخ `supabase-config.example.js` إلى `supabase-config.js` واملأ رابط مشروع Supabase ومفتاح Publishable/anon فقط.
+- شغّل SQL في Supabase SQL Editor.
+- المزامنة لم تُفعّل بعد؛ يلزم تنفيذ وربط المصادقة وعميل المزامنة في الواجهة، ثم اختبار صلاحيات المستخدمين والنسخ الاحتياطي. لا تضع service_role أو أي مفتاح سري في GitHub Pages.
