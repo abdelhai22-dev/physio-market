@@ -1,16 +1,16 @@
 const DATA = window.PHYSIO_DATA;
-const titles = {dashboard:"لوحة المؤشرات",devices:"الأجهزة والمعدات",consumables:"المستهلكات والملحقات",companies:"الشركات المصرية",suppliers:"الموردون والمصانع الصينية",brands:"العلامات التجارية",distributors:"الوكلاء والموزعون",quotes:"عروض الأسعار",logistics:"الشحن والاستيراد",regulatory:"التسجيل والامتثال",sources:"المصادر والتحقق",codes:"دليل الأكواد"};
+const titles = {search:"نتائج البحث",dashboard:"لوحة المؤشرات",devices:"الأجهزة والمعدات",consumables:"المستهلكات والملحقات",companies:"الشركات المصرية",suppliers:"الموردون والمصانع الصينية",brands:"العلامات التجارية",distributors:"الوكلاء والموزعون",quotes:"عروض الأسعار",logistics:"الشحن والاستيراد",regulatory:"التسجيل والامتثال",sources:"المصادر والتحقق",codes:"دليل الأكواد"};
 const config = {
  devices:{key:"devices",label:"الجهاز",cols:[["code","الكود"],["name","اسم الجهاز"],["brand","العلامة"],["model","الموديل"],["price","السعر"],["currency","العملة"],["status","حالة البيانات"]]},
  consumables:{key:"consumables",label:"المستهلك",cols:[["code","الكود"],["name","الصنف"],["price","السعر"],["priceRange","نطاق السعر"],["currency","العملة"],["moq","MOQ"],["status","حالة البيانات"]]},
- companies:{key:"companies",label:"الشركة",cols:[["code","الكود"],["name","الشركة"],["phone","الهاتف"],["email","البريد"],["location","العنوان"],["status","حالة التحقق"]]},
+ companies:{key:"companies",label:"الشركة",cols:[["code","الكود"],["name","الشركة"],["phone","الهاتف"],["email","البريد"],["location","العنوان"],["website","الموقع الإلكتروني"],["status","حالة التحقق"]]},
  suppliers:{key:"suppliers",label:"المورد",cols:[["code","الكود"],["name","المصنع / المورد"],["country","الدولة"],["product","المنتج"],["priceRange","السعر الإرشادي"],["moq","MOQ"],["status","حالة التحقق"]]},
  brands:{key:"brands",label:"العلامة",cols:[["code","الكود"],["name","العلامة التجارية"],["category","التخصص"]]},
  distributors:{key:"distributors",label:"الموزع",cols:[["code","الكود"],["name","الموزع"],["brand","العلامة"],["territory","النطاق"],["status","الحالة"]]},
  quotes:{key:"quotes",label:"عرض السعر",cols:[["code","الكود"],["supplier","المورد"],["product","المنتج"],["price","السعر"],["date","التاريخ"],["status","الحالة"]]},
  logistics:{key:"logistics",label:"عملية الشحن",cols:[["code","الكود"],["route","خط الشحن"],["method","الوسيلة"],["cost","التكلفة"],["status","الحالة"]]},
  regulatory:{key:"regulatory",label:"مرجع",cols:[["code","الكود"],["name","المستند / المرجع"],["type","النوع"],["status","التصنيف"]]},
- sources:{key:"sources",label:"مصدر",cols:[["code","الكود"],["name","المصدر"],["type","النوع"],["status","حالة التحقق"]]}
+ sources:{key:"sources",label:"مصدر",cols:[["code","الكود"],["name","المصدر"],["type","النوع"],["url","الرابط"],["status","حالة التحقق"]]}
 };
 const content = document.getElementById("app-content");
 let currentView="dashboard", query="";
@@ -52,6 +52,19 @@ function renderTable(view){
  <div class="search-meta">يمكنك استخدام البحث العام أعلى الصفحة لتصفية هذا القسم بالاسم أو الكود أو الهاتف أو الموديل.</div>
  <div class="table-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body||'<tr><td colspan="'+c.cols.length+'" class="empty">لا توجد سجلات مطابقة حاليًا.</td></tr>'}</tbody></table></div>`;
 }
+function globalSearch(){
+ const sections=Object.keys(config);let total=0;
+ const blocks=sections.map(view=>{
+  const c=config[view],rows=DATA[c.key]||[];
+  const matches=rows.filter(r=>JSON.stringify(r).toLowerCase().includes(query));
+  if(!matches.length)return "";
+  total+=matches.length;
+  return '<div class="panel"><div class="panel-head"><h3>'+titles[view]+'</h3><button class="btn secondary" data-go="'+view+'">فتح القسم</button></div>'+
+   matches.map(r=>'<div class="activity-row"><span><b>'+fmt(r.name||r.product||r.route||r.code)+'</b> <small class="code">'+fmt(r.code)+'</small><br><small class="subtle">'+fmt(r.phone||r.model||r.brand||r.type||r.country||"")+'</small></span>'+(r.status?statusTag(r.status):"")+'</div>').join("")+'</div>';
+ }).join("");
+ return '<div class="section-head"><div><h2>نتائج البحث الشامل</h2><p>عدد النتائج المطابقة: '+total+'</p></div></div>'+
+ (blocks||'<div class="panel empty">لا توجد نتائج مطابقة. جرّب اسمًا أو كودًا أو رقم هاتف مختلفًا.</div>');
+}
 function codes(){
  const items=[["الأجهزة","DEV-CATEGORY-00001"],["المستهلكات","CON-CATEGORY-00001"],["قطع الغيار","SPR-CATEGORY-00001"],["الشركات المصرية","EGC-00001"],["المصانع الصينية","CNF-00001"],["العلامات التجارية","BRD-00001"],["الوكلاء والموزعون","DST-00001"],["عروض الأسعار","QTN-00001"],["الشحن واللوجستيات","SHP-00001"],["المستندات التنظيمية","REG-00001"],["المستندات والملفات","DOC-00001"],["العملاء","CUS-00001"],["المصادر","SRC-00001"]];
  return `<div class="section-head"><div><h2>دليل الأكواد الموحد</h2><p>معرّف فريد وثابت لكل سجل داخل المنصة</p></div></div><div class="note">قاعدة التسمية: بادئة ثابتة من 3 أحرف + تصنيف اختياري + رقم تسلسلي من 5 خانات. لا يُعاد استخدام الكود بعد حذف السجل.</div><div class="code-grid">${items.map(([n,c])=>'<div class="code-item"><b>'+n+'</b><code>'+c+'</code></div>').join("")}</div>`;
@@ -59,7 +72,7 @@ function codes(){
 function render(){
  document.getElementById("page-title").textContent=titles[currentView];
  document.querySelectorAll(".nav-link").forEach(b=>b.classList.toggle("active",b.dataset.view===currentView));
- content.innerHTML=currentView==="dashboard"?dashboard():currentView==="codes"?codes():renderTable(currentView);
+ content.innerHTML=currentView==="search"?globalSearch():currentView==="dashboard"?dashboard():currentView==="codes"?codes():renderTable(currentView);
  const exportBtn=document.getElementById("export-csv");if(exportBtn)exportBtn.addEventListener("click",exportCSV);
 }
 function go(view){currentView=view;query="";document.getElementById("global-search").value="";render();}
@@ -70,5 +83,5 @@ function exportCSV(){
 }
 document.getElementById("main-nav").addEventListener("click",e=>{const b=e.target.closest("[data-view]");if(b)go(b.dataset.view);});
 content.addEventListener("click",e=>{const b=e.target.closest("[data-go]");if(b)go(b.dataset.go);});
-document.getElementById("global-search").addEventListener("input",e=>{query=e.target.value.trim().toLowerCase();if(currentView==="dashboard"&&query)currentView="devices";render();});
+document.getElementById("global-search").addEventListener("input",e=>{query=e.target.value.trim().toLowerCase();currentView=query?"search":"dashboard";render();});
 render();
