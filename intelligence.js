@@ -163,6 +163,16 @@
   };
   const originalDeleteRecord = deleteRecord;
   deleteRecord = function(view, code) {
+    const referenced =
+      D.relationships.some(x=>x.entityACode===code||x.entityBCode===code) ||
+      D.opportunities.some(x=>x.customerCode===code||x.productCode===code) ||
+      D.fieldNotes.some(x=>x.relatedEntityCode===code||x.relatedOpportunityCode===code||x.sourceCode===code) ||
+      D.customers.some(x=>x.sourceCode===code) ||
+      D.opportunities.some(x=>x.sourceCode===code);
+    if (referenced) {
+      alert("لا يمكن حذف هذا السجل لأنه مرتبط بعلاقة أو فرصة أو معلومة ميدانية. حدّث الروابط أولًا للحفاظ على سلامة البيانات.");
+      return;
+    }
     const before = JSON.parse(JSON.stringify(collection(view).find(x=>x.code===code)||null));
     originalDeleteRecord(view, code);
     const stillThere = collection(view).some(x=>x.code===code);
@@ -229,6 +239,7 @@
           });
         });
         saveData();
+        logAudit("import", "backup", {code:"IMPORT-"+Date.now(),name:file.name,added,conflicts});
         out.textContent="تمت إضافة "+added+" سجل جديد، وتجاوز "+conflicts+" سجلًا له كود موجود. راجع السجلات المستوردة قبل الاعتماد.";
       } catch(err) { out.textContent="تعذر استيراد الملف: "+err.message; }
     };
