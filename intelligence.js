@@ -55,15 +55,15 @@
     config.quotes.cols.push(["exwPrice","EXW"],["fobPrice","FOB"],["cifPrice","CIF"],["incotermCurrency","العملة"],["quoteValidUntil","صالح حتى"],["status","الحالة"]);
   }
   Object.assign(titles, {quoteComparison:"مقارنة عروض الموردين"});
-  const nav = $("#main-nav");
-  if (nav && !nav.querySelector('[data-view="quoteComparison"]')) {
+  const sourcingNav = $("#main-nav");
+  if (sourcingNav && !sourcingNav.querySelector('[data-view="quoteComparison"]')) {
     const anchor = nav.querySelector('[data-view="quotes"]');
     const b = document.createElement("button");
     b.className = "nav-link";
     b.dataset.view = "quoteComparison";
     b.innerHTML = "<span>⇅</span> مقارنة عروض الموردين";
     if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(b, anchor.nextSibling);
-    else nav.appendChild(b);
+    else sourcingNav.appendChild(b);
   }
   // Add provenance fields to legacy forms without replacing existing fields.
   ["devices","consumables","companies","suppliers","brands","distributors","quotes","prices","logistics","regulatory"].forEach(view => {
