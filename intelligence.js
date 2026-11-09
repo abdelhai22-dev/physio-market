@@ -11,7 +11,7 @@
   const actors = ["غير محدد","أحمد عبد الحي","أحمد صلاح"];
   let activeActor = localStorage.getItem(actorKey) || actors[0];
 
-  ["customers","relationships","opportunities","fieldNotes","auditLog"].forEach(k => {
+  ["customers","relationships","opportunities","fieldNotes","auditLog","priceSnapshots"].forEach(k => {
     if (!Array.isArray(D[k])) D[k] = [];
   });
 
@@ -32,7 +32,8 @@
     opportunities:"الفرص والصفقات",
     fieldNotes:"المعلومات الميدانية",
     audit:"سجل التعديلات",
-    backup:"النسخ الاحتياطي"
+    backup:"النسخ الاحتياطي",
+    priceIntelligence:"تحليل أسعار السوق"
   });
   Object.assign(config, {
     customers:{key:"customers",label:"عميل / جهة",prefix:"CUS",cols:[["code","الكود"],["name","اسم الجهة"],["type","نوع الجهة"],["city","المدينة"],["phone","الهاتف"],["contactPerson","مسؤول التواصل"],["status","حالة التحقق"],["confidentiality","السرية"]]},
@@ -152,6 +153,28 @@
     const before = beforeCode ? JSON.parse(JSON.stringify(arrBefore.find(x=>x.code===beforeCode)||null)) : null;
     originalSaveRecord(view, form);
     const arrAfter = collection(view);
+    if (view === "prices") {
+      const priceRecord = beforeCode ? arrAfter.find(x=>x.code===beforeCode) : arrAfter[arrAfter.length-1];
+      if (priceRecord) {
+        const src = D.sources.find(x=>x.code===priceRecord.sourceCode);
+        D.priceSnapshots.push({
+          code:"PS-MANUAL-"+Date.now()+"-"+Math.random().toString(36).slice(2,6).toUpperCase(),
+          productCode:priceRecord.productCode||"",
+          productName:productName(priceRecord.productCode),
+          model:(findEntity(priceRecord.productCode)||{}).model||"",
+          seller:companyName(priceRecord.companyCode),
+          sellerType:"manual_market_observation",
+          amount:Number(priceRecord.amount),
+          currency:priceRecord.currency||"EGP",
+          observedAt:priceRecord.observedAt||today(),
+          sourceCode:priceRecord.sourceCode||"",
+          sourceUrl:src?.url||"",
+          priceType:priceRecord.priceType||"published_retail",
+          status:priceRecord.status||"needs_review",
+          notes:priceRecord.notes||"رصد سعر أُدخل يدويًا من سجل الأسعار"
+        });
+      }
+    }
     const saved = beforeCode ? arrAfter.find(x=>x.code===beforeCode) : arrAfter[arrAfter.length-1];
     if (saved) {
       const now = new Date().toISOString();
@@ -209,12 +232,12 @@
     const values=filtered.map(x=>Number(x.amount)).filter(Number.isFinite);
     const sum=values.reduce((a,b)=>a+b,0),avg=values.length?sum/values.length:0;
     const min=values.length?Math.min(...values):0,max=values.length?Math.max(...values):0;
-    const spread=avg?((max-min)/avg)*100:0;
+    const spread=min?((max-min)/min)*100:0;
     const sellers=new Set(filtered.map(x=>x.seller)).size;
     const uniqueProducts=new Set(filtered.map(x=>x.productCode)).size;
     const start=new Date("2026-09-14T00:00:00"),end=new Date("2026-11-09T00:00:00");
     const weeks=Array.from({length:8},(_,i)=>{const d=new Date(end);d.setDate(d.getDate()-(7-i)*7);return {date:d.toISOString().slice(0,10),label:d.toLocaleDateString("ar-EG",{day:"2-digit",month:"short"})};});
-    const weekly=weeks.map(w=>{const rs=filtered.filter(x=>{const dt=new Date(x.observedAt+"T00:00:00");const lo=new Date(w.date+"T00:00:00");const hi=new Date(lo);hi.setDate(hi.getDate()+7);return dt>=lo&&dt<hi;});return {...w,count:rs.length,avg:rs.length?rs.reduce((a,x)=>a+Number(x.amount),0)/rs.length:null};});
+    const weekly=weeks.map(w=>{const rs=filtered.filter(x=>{const dt=new Date(x.observedAt+"T00:00:00");const hi=new Date(w.date+"T00:00:00");const lo=new Date(hi);lo.setDate(lo.getDate()-7);return dt>lo&&dt<=hi;});return {...w,count:rs.length,avg:rs.length?rs.reduce((a,x)=>a+Number(x.amount),0)/rs.length:null};});
     const chartW=760,chartH=260,left=58,right=20,top=18,bottom=42,plotW=chartW-left-right,plotH=chartH-top-bottom;
     const yMin=values.length?Math.max(0,Math.floor(min/1000)*1000):0,yMax=values.length?Math.ceil(max/1000)*1000:1000;
     const y=v=>top+plotH-(v-yMin)/(Math.max(1,yMax-yMin))*plotH;
