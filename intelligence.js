@@ -19,7 +19,9 @@
     if (schemas[view] && !schemas[view].some(x => x[0] === field[0])) schemas[view].push(field);
   };
   // Product-to-original-manufacturer identity and evidence fields.
-  addField("devices", ["originalFactoryCode","المصنع الأصلي (ليس المورد المحلي)","ref:suppliers"]);
+  addField("devices", ["originalManufacturerName","اسم المصنع الأصلي القانوني","text"]);
+  addField("devices", ["originalManufacturerCountry","بلد المصنع الأصلي","text"]);
+  addField("devices", ["manufacturerOfficialUrl","رابط المصنع الأصلي الرسمي","url"]);
   addField("devices", ["manufacturerModel","اسم الموديل لدى المصنع","text"]);
   addField("devices", ["manufacturerPartNumber","كود المصنع / Part No.","text"]);
   addField("devices", ["oemModel","موديل OEM / ODM إن وجد","text"]);
@@ -27,6 +29,9 @@
   addField("devices", ["matchEvidenceType","نوع دليل المطابقة","select:official_catalog,label_photo,manual,certificate,manufacturer_email,other"]);
   addField("devices", ["matchEvidenceUrl","رابط دليل المطابقة","url"]);
   addField("devices", ["matchVerifiedAt","تاريخ التحقق من المطابقة","date"]);
+  addField("sourcing", ["originalManufacturerName","اسم المصنع الأصلي القانوني","text"]);
+  addField("sourcing", ["originalManufacturerCountry","بلد المصنع الأصلي","text"]);
+  addField("sourcing", ["manufacturerOfficialUrl","رابط المصنع الأصلي الرسمي","url"]);
   addField("sourcing", ["manufacturerModel","اسم الموديل لدى المصنع","text"]);
   addField("sourcing", ["manufacturerPartNumber","كود المصنع / Part No.","text"]);
   addField("sourcing", ["matchEvidenceType","نوع دليل المطابقة","select:official_catalog,label_photo,manual,certificate,manufacturer_email,other"]);
