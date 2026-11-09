@@ -76,7 +76,11 @@ window.PHYSIO_DATA = {
     {code:"BRD-00003",name:"JUMPER",category:"أجهزة طبية وإلكترونية"},
     {code:"BRD-00004",name:"Zimmer",category:"أجهزة علاج طبيعي"},
     {code:"BRD-00005",name:"Technomex",category:"أجهزة علاج طبيعي"},
-    {code:"BRD-00006",name:"Carci",category:"أجهزة علاج طبيعي"}
+    {code:"BRD-00006",name:"Carci",category:"أجهزة علاج طبيعي"},
+    {"code":"BRD-00007","name":"BTS","category":"تقييم الحركة والنشاط العضلي","country":"إيطاليا"},
+    {"code":"BRD-00008","name":"Mazet Santé","category":"التأهيل والعلاج الكهربائي وقاع الحوض","country":"فرنسا"},
+    {"code":"BRD-00009","name":"Mecmedix","category":"TECAR وShockwave وLaser","country":"إيطاليا"},
+    {"code":"BRD-00010","name":"Syrebo","category":"تأهيل اليد والروبوتات التأهيلية","country":"الصين"}
   ],
   distributors: [],
   customers: [
@@ -127,6 +131,8 @@ window.PHYSIO_DATA = {
     {code:"SRC-00019",name:"EgyservShop – Muscle Strengthening",url:"https://egyservshop.com/product-category/pain-relief/",type:"متجر إلكتروني / سعر تجزئة منشور",publisher:"EgyservShop",accessedAt:"2026-11-09",status:"needs_review",notes:"أسعار معلنة لعدة موديلات Beurer؛ قد تتغير الخصومات والتوفر."},
     {code:"SRC-00020",name:"Mdizon Store – Beurer category",url:"https://mdizon.store/category/beurer-iekte",type:"متجر إلكتروني / سعر تجزئة منشور",publisher:"Mdizon Store",accessedAt:"2026-11-09",status:"needs_review",notes:"أسعار معلنة على صفحات الفئة؛ يلزم مطابقة الموديل وحالة المنتج."},
     {code:"SRC-00021",name:"Ali Ben Ali Medical – Physiotherapy",url:"https://alibenalimedical.com/product-category/Physiotherapy/",type:"متجر أجهزة طبية / سعر تجزئة منشور",publisher:"Ali Ben Ali Medical",accessedAt:"2026-11-09",status:"needs_review",notes:"يعرض أسعار بعض أجهزة العلاج الطبيعي؛ يلزم التحقق من توافر الموديل والسعر النهائي."},
-    {code:"SRC-00022",name:"Mdizon.com.eg – Beurer category",url:"https://www.mdizon.com.eg/category/beurer-iekte",type:"متجر إلكتروني / سعر تجزئة منشور",publisher:"Mdizon.com.eg",accessedAt:"2026-11-09",status:"needs_review",notes:"صفحة فئة منفصلة عن mdizon.store؛ تم تسجيلها كمصدر مستقل لتجنب دمج المتجرين."}
+    {code:"SRC-00022",name:"Mdizon.com.eg – Beurer category",url:"https://www.mdizon.com.eg/category/beurer-iekte",type:"متجر إلكتروني / سعر تجزئة منشور",publisher:"Mdizon.com.eg",accessedAt:"2026-11-09",status:"needs_review",notes:"صفحة فئة منفصلة عن mdizon.store؛ تم تسجيلها كمصدر مستقل لتجنب دمج المتجرين."},
+    {"code":"SRC-00023","name":"Smart Medical Solutions – كتالوج المنتجات","url":"https://smsegypt.net/ar/products","type":"كتالوج شركة مصرية رسمي","publisher":"Smart Medical Solutions","accessedAt":"2026-11-09","status":"verified","notes":"يعرض كتالوجًا يضم 19 منتجًا و13 فئة و9 علامات؛ يدعم أسماء الموديلات والعلامات وبلدان المنشأ كما تظهر في القائمة. لا يدعم السعر أو المخزون أو التفويض الحصري."},
+    {"code":"SRC-00024","name":"Ramses Medical Group – الأجهزة المعروضة","url":"https://ramsesmedical.net/","type":"كتالوج موزع مصري رسمي","publisher":"Ramses Medical Group","accessedAt":"2026-11-09","status":"verified","notes":"يدعم ظهور الأجهزة المميزة SonoMed وPhysys وSoleo Sonostim وFesMed وLaserMed وCryo 6. تفاصيل كل موديل لا تُسجل إلا عند وجود صفحة فنية منفصلة."}
   ]
 };
