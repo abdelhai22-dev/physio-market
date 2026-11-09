@@ -184,6 +184,7 @@
       saved._meta.recordOrigin = saved.recordOrigin || (before ? "legacy" : "user_entry");
       logAudit(before ? "update" : "create", view, saved, before);
     }
+    if (view === "prices" && currentView === "priceIntelligence") render();
   };
   const originalDeleteRecord = deleteRecord;
   deleteRecord = function(view, code) {
