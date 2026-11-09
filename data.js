@@ -144,6 +144,7 @@ window.PHYSIO_DATA = {
     {"code":"SRC-00028","name":"MBS Tech – official manufacturer profile","url":"https://www.mbsphysio.com/aboutus.html","type":"موقع مصنع رسمي","publisher":"MBS Tech Co., Ltd","accessedAt":"2026-11-09","status":"verified","notes":"الموقع يصف الشركة كمصنع صيني ويعرض Shockwave وTECAR وPEMF وPneumatic Compression وCryotherapy مع خدمات OEM/ODM. يلزم التحقق من الموديل والشهادات."},
     {"code":"SRC-00029","name":"Guangzhou Tenxua – official manufacturer website","url":"https://tenxua.com/","type":"موقع مصنع رسمي","publisher":"Guangzhou Tenxua Electronic Technology Co., Ltd","accessedAt":"2026-11-09","status":"verified","notes":"الموقع يصف الشركة كمصنع معدات علاج طبيعي ويعرض Shockwave وTECAR وLaser وUltrasound وOEM/ODM. يلزم التحقق من الموديل والشهادات."},
     {"code":"SRC-00030","name":"ITO Corporation – official product and distributor directory","url":"https://www.itocoltd.com/products/","type":"موقع مصنع أصلي رسمي","publisher":"ITO Corporation","accessedAt":"2026-11-09","status":"verified","notes":"مصدر المصنع الأصلي الياباني لموديلات ITO مثل ES-5200 وES-5400 وEU-941 وUS-751؛ لا يُصنف مصنعًا صينيًا."},
+  ],
   sourcing: [
     {"code":"SRC-LINK-00001","productCategory":"Shockwave / موجات تصادمية","factoryCode":"CNF-00006","egyptianCompanyCode":"EGC-00010","relationshipStatus":"category_lead","evidenceStatus":"needs_review","sourceCode":"SRC-00011","notes":"توافق فئة المنتجات المعلنة لدى المصنع والمورد المصري؛ لا يثبت توريد نفس الموديل أو وجود وكالة."},
     {"code":"SRC-LINK-00002","productCategory":"TECAR Therapy","factoryCode":"CNF-00006","egyptianCompanyCode":"EGC-00010","relationshipStatus":"category_lead","evidenceStatus":"needs_review","sourceCode":"SRC-00011","notes":"مطابقة على مستوى فئة TECAR فقط؛ يلزم سؤال الشركة عن المصنع والموديلات المتاحة."},
@@ -153,5 +154,4 @@ window.PHYSIO_DATA = {
     {"code":"SRC-LINK-00006","productCategory":"Shockwave / TECAR / Laser / Ultrasound","factoryCode":"CNF-00009","egyptianCompanyCode":"EGC-00003","relationshipStatus":"category_lead","evidenceStatus":"needs_review","sourceCode":"SRC-00014","notes":"مورد مصري محتمل للاستفسار؛ لا يوجد إثبات أن Ramses يستورد أو يبيع منتجات Tenxua."}
   ],
   landedCosts: []
-  ]
 };
