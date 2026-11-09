@@ -122,6 +122,7 @@
   if (nav && !$("#mi-nav-start")) {
     nav.insertAdjacentHTML("beforeend",
       '<p class="nav-caption" id="mi-nav-start">الذكاء التجاري</p>'+
+      '<button class="nav-link" data-view="priceIntelligence"><span>▥</span> تحليل أسعار السوق · 8 أسابيع</button>'+
       '<button class="nav-link" data-view="customers"><span>⌂</span> العملاء والجهات المستهدفة</button>'+
       '<button class="nav-link" data-view="relationships"><span>⇄</span> العلاقات التجارية</button>'+
       '<button class="nav-link" data-view="opportunities"><span>◈</span> الفرص والصفقات</button>'+
@@ -199,18 +200,68 @@
       '</tbody></table></div>';
   }
 
+
+  function priceIntelligencePage() {
+    const rows=(D.priceSnapshots||[]).filter(x=>x.currency==="EGP"&&x.observedAt>="2026-09-14"&&x.observedAt<="2026-11-09");
+    const products=[...new Map(rows.map(x=>[x.productCode,{code:x.productCode,name:x.productName,model:x.model}])).values()];
+    const selected=$("#pi-product-filter")?.value||"ALL";
+    const filtered=selected==="ALL"?rows:rows.filter(x=>x.productCode===selected);
+    const values=filtered.map(x=>Number(x.amount)).filter(Number.isFinite);
+    const sum=values.reduce((a,b)=>a+b,0),avg=values.length?sum/values.length:0;
+    const min=values.length?Math.min(...values):0,max=values.length?Math.max(...values):0;
+    const spread=avg?((max-min)/avg)*100:0;
+    const sellers=new Set(filtered.map(x=>x.seller)).size;
+    const uniqueProducts=new Set(filtered.map(x=>x.productCode)).size;
+    const start=new Date("2026-09-14T00:00:00"),end=new Date("2026-11-09T00:00:00");
+    const weeks=Array.from({length:8},(_,i)=>{const d=new Date(end);d.setDate(d.getDate()-(7-i)*7);return {date:d.toISOString().slice(0,10),label:d.toLocaleDateString("ar-EG",{day:"2-digit",month:"short"})};});
+    const weekly=weeks.map(w=>{const rs=filtered.filter(x=>{const dt=new Date(x.observedAt+"T00:00:00");const lo=new Date(w.date+"T00:00:00");const hi=new Date(lo);hi.setDate(hi.getDate()+7);return dt>=lo&&dt<hi;});return {...w,count:rs.length,avg:rs.length?rs.reduce((a,x)=>a+Number(x.amount),0)/rs.length:null};});
+    const chartW=760,chartH=260,left=58,right=20,top=18,bottom=42,plotW=chartW-left-right,plotH=chartH-top-bottom;
+    const yMin=values.length?Math.max(0,Math.floor(min/1000)*1000):0,yMax=values.length?Math.ceil(max/1000)*1000:1000;
+    const y=v=>top+plotH-(v-yMin)/(Math.max(1,yMax-yMin))*plotH;
+    const x=i=>left+i*(plotW/7);
+    const points=weekly.map((w,i)=>w.avg===null?null:{x:x(i),y:y(w.avg),label:w.label,value:w.avg}).filter(Boolean);
+    const segments=weekly.map((w,i)=>w.avg===null?null:{i,x:x(i),y:y(w.avg)}).filter(Boolean);
+    const lines=segments.slice(1).filter(p=>{const prev=segments[segments.indexOf(p)-1];return prev&&p.i-prev.i===1;}).map(p=>{const prev=segments[segments.indexOf(p)-1];return '<line x1="'+prev.x+'" y1="'+prev.y+'" x2="'+p.x+'" y2="'+p.y+'" stroke="#3979a5" stroke-width="3" stroke-linecap="round"/>';}).join("");
+    const grid=[0,1,2,3].map(i=>{const val=yMin+(yMax-yMin)*i/3,yy=y(val);return '<line x1="'+left+'" y1="'+yy+'" x2="'+(chartW-right)+'" y2="'+yy+'" stroke="#e7edf2" stroke-dasharray="4 5"/><text x="'+(left-10)+'" y="'+(yy+4)+'" text-anchor="end" fill="#718096" font-size="11">'+Math.round(val).toLocaleString("en-US")+'</text>';}).join("");
+    const dots=points.map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="6" fill="#3979a5" stroke="#fff" stroke-width="2"><title>'+p.label+': '+Math.round(p.value).toLocaleString("en-US")+' EGP</title></circle>').join("");
+    const labels=weeks.map((w,i)=>'<text x="'+x(i)+'" y="'+(chartH-13)+'" text-anchor="middle" fill="#718096" font-size="10">'+w.label+'</text>').join("");
+    const chart='<svg viewBox="0 0 '+chartW+' '+chartH+'" role="img" aria-label="متوسط السعر الأسبوعي الفعلي"><text x="'+left+'" y="12" fill="#718096" font-size="10">EGP</text>'+grid+lines+dots+labels+'</svg>';
+    const productOptions='<option value="ALL">كل الموديلات</option>'+products.map(p=>'<option value="'+escI(p.code)+'" '+(selected===p.code?'selected':'')+'>'+escI(p.name)+'</option>').join("");
+    const byProduct=products.map(p=>{const a=rows.filter(x=>x.productCode===p.code).map(x=>Number(x.amount));return {name:p.name,code:p.code,count:a.length,min:Math.min(...a),max:Math.max(...a),avg:a.reduce((n,v)=>n+v,0)/a.length,sellers:new Set(rows.filter(x=>x.productCode===p.code).map(x=>x.seller)).size};});
+    const table=byProduct.map(p=>'<tr><td><b>'+escI(p.name)+'</b><small class="subtle">'+escI(p.code)+'</small></td><td>'+p.count+'</td><td>'+p.sellers+'</td><td>'+Math.round(p.min).toLocaleString("en-US")+' ج.م</td><td>'+Math.round(p.max).toLocaleString("en-US")+' ج.م</td><td>'+Math.round(p.avg).toLocaleString("en-US")+' ج.م</td></tr>').join("");
+    const priceRows=[...filtered].sort((a,b)=>a.productName.localeCompare(b.productName)||a.amount-b.amount).map(p=>'<tr><td>'+escI(p.productName)+'<small class="subtle">'+escI(p.model)+'</small></td><td>'+escI(p.seller)+'</td><td><b>'+Number(p.amount).toLocaleString("en-US")+' ج.م</b></td><td>'+escI(p.observedAt)+'</td><td><a href="'+escI(p.sourceUrl)+'" target="_blank" rel="noopener">المصدر ↗</a></td><td>'+escI(p.status==="verified"?"متحقق":"يحتاج مراجعة")+'</td></tr>').join("");
+    return '<div class="section-head"><div><h2>تحليل أسعار السوق · آخر 8 أسابيع</h2><p>الفترة: 14 سبتمبر – 9 نوفمبر 2026 · أسعار تجزئة منشورة بالجنيه المصري</p></div><div class="section-actions"><button class="btn secondary" id="pi-add-price">+ إضافة رصد سعر</button><button class="btn secondary" id="pi-export-csv">تصدير بيانات المقارنة CSV</button></div></div>'+
+      '<div class="mi-warning"><b>تنبيه تاريخي:</b> قاعدة الأسعار تحتوي حاليًا على رصد منشور في أسبوع واحد فقط. الأسابيع السبعة السابقة بلا سجلات موثقة؛ لذلك لا نحسب تغيرًا زمنيًا ولا نرسم نقاطًا تقديرية أو نعتبر السعر الحالي تاريخيًا.</div>'+
+      '<div class="pi-filter panel"><label>الموديل محل التحليل <select id="pi-product-filter">'+productOptions+'</select></label><span class="subtle">التجميع أسبوعي، ولا تظهر نقطة إلا عند وجود رصد فعلي.</span></div>'+
+      '<div class="stats-grid pi-kpis">'+[['عدد أرصدة الأسعار',values.length],['موديلات مقارنة',uniqueProducts],['مصادر / بائعون',sellers],['أقل سعر',min?Math.round(min).toLocaleString("en-US")+" ج.م":"—"],['أعلى سعر',max?Math.round(max).toLocaleString("en-US")+" ج.م":"—"],['متوسط السعر',avg?Math.round(avg).toLocaleString("en-US")+" ج.م":"—"],['فارق النطاق',values.length>1?spread.toFixed(1)+"%":"—"],['تغطية الفترة',weekly.filter(w=>w.count).length+"/8 أسابيع"]].map(x=>'<div class="stat-card"><div class="stat-label">'+x[0]+'</div><div class="stat-value">'+x[1]+'</div><div class="stat-foot">حسب السجلات المتاحة</div></div>').join("")+'</div>'+
+      '<div class="panel pi-chart"><div class="panel-head"><h3>اتجاه متوسط السعر الأسبوعي</h3><span class="subtle">لا يوجد خط اتجاه قبل توافر رصد في أسبوعين مختلفين على الأقل</span></div>'+chart+'<div class="pi-week-coverage">'+weekly.map(w=>'<span class="'+(w.count?'has-data':'')+'">'+w.label+'<b>'+(w.count? w.count+" رصد":"لا توجد بيانات")+'</b></span>').join("")+'</div></div>'+
+      '<div class="panel"><div class="panel-head"><h3>مقارنة الموديلات</h3><span class="subtle">الأسعار المنشورة فقط · EGP</span></div><div class="table-wrap"><table><thead><tr><th>الموديل</th><th>عدد الأسعار</th><th>البائعون</th><th>الأقل</th><th>الأعلى</th><th>المتوسط</th></tr></thead><tbody>'+(table||'<tr><td colspan="6" class="empty">لا توجد بيانات.</td></tr>')+'</tbody></table></div></div>'+
+      '<div class="panel"><div class="panel-head"><h3>تفاصيل الرصد ومصادر الأسعار</h3><span class="subtle">'+filtered.length+' سجل</span></div><div class="table-wrap"><table><thead><tr><th>الجهاز</th><th>البائع</th><th>السعر</th><th>تاريخ الرصد</th><th>المصدر</th><th>الحالة</th></tr></thead><tbody>'+(priceRows||'<tr><td colspan="6" class="empty">لا توجد أرصدة.</td></tr>')+'</tbody></table></div></div>';
+  }
+
   const originalRender = render;
   render = function() {
-    if (currentView === "backup" || currentView === "audit") {
+    if (currentView === "backup" || currentView === "audit" || currentView === "priceIntelligence") {
       $("#page-title").textContent = titles[currentView];
       document.querySelectorAll(".nav-link").forEach(b=>b.classList.toggle("active",b.dataset.view===currentView));
-      content.innerHTML = currentView === "backup" ? backupPage() : auditPage();
+      content.innerHTML = currentView === "backup" ? backupPage() : currentView === "audit" ? auditPage() : priceIntelligencePage();
       return;
     }
     originalRender();
   };
 
+  content.addEventListener("change", e => {
+    if (e.target.id === "pi-product-filter") render();
+  });
   content.addEventListener("click", e => {
+    if (e.target.closest("#pi-add-price")) openForm("prices");
+    if (e.target.closest("#pi-export-csv")) {
+      const rows=D.priceSnapshots||[];
+      const keys=["productName","model","seller","amount","currency","observedAt","sourceUrl","status"];
+      const csv=[keys.join(","),...rows.map(r=>keys.map(k=>'"'+String(r[k]??"").replace(/"/g,'""')+'"').join(","))].join("\\r\\n");
+      const blob=new Blob(["\\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+      const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="physio-market-price-snapshots.csv";a.click();URL.revokeObjectURL(url);
+    }
     if (e.target.closest("#mi-export-json")) {
       const payload = {format:"PHYSIO_MARKET_BACKUP",version:1,exportedAt:new Date().toISOString(),data:D};
       const blob = new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
