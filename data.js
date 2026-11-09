@@ -54,6 +54,11 @@ window.PHYSIO_DATA = {
     {code:"BRD-00006",name:"Carci",category:"أجهزة علاج طبيعي"}
   ],
   distributors: [],
+  customers: [
+    {code:"CUS-00001",name:"PhysioEgypt Clinics – فرع المعادي",type:"clinic",country:"مصر",city:"المعادي",governorate:"القاهرة",phone:"+20 100 989 9785",email:"physioegypt@gmail.com",website:"https://www.physioegyptclinics.com/",sourceCode:"SRC-00015",status:"reference",confidentiality:"internal",notes:"منشأة علاج طبيعي معلنة على موقعها الرسمي. العنوان المنشور: مبنى 11، الدور الأرضي، كمباوند حياة دجلة، المعادي. جهة محتملة للاستهداف التجاري فقط؛ لا يوجد احتياج شراء أو تواصل مثبت."},
+    {code:"CUS-00002",name:"Medicure Clinics – New Cairo",type:"clinic",country:"مصر",city:"القاهرة الجديدة",governorate:"القاهرة",phone:"+20 122 088 8811",website:"https://medicureclinics.net/",sourceCode:"SRC-00016",status:"reference",confidentiality:"internal",notes:"الموقع الرسمي يعلن خدمة العلاج الطبيعي والتأهيل وفرعًا داخل فندق Triumph Katameya بمنطقة الشويفات، الدور الأرضي بجوار الجيم. جهة محتملة للاستهداف التجاري فقط؛ لا يوجد احتياج شراء أو تواصل مثبت."},
+    {code:"CUS-00003",name:"101 Clinics – Physiotherapy & Pain Management",type:"medical_center",country:"مصر",city:"القاهرة الجديدة",governorate:"القاهرة",phone:"+20 111 807 0701",email:"info@101clinics.com",website:"https://www.101clinics.com/en/clinics/physiotherapy",sourceCode:"SRC-00017",status:"reference",confidentiality:"internal",notes:"عيادة علاج طبيعي وإدارة ألم؛ العنوان المنشور: La Mirada Plaza، بوابة Center Gate 2، الدور الأول، عيادة 101، القاهرة الجديدة. جهة محتملة للاستهداف التجاري فقط؛ لا يوجد احتياج شراء أو تواصل مثبت."}
+  ],
   quotes: [],
   prices: [],
   productLinks: [],
@@ -77,6 +82,9 @@ window.PHYSIO_DATA = {
     {code:"SRC-00011",name:"SERVOMED – Physiotherapy and Rehabilitation",url:"https://www.servomed-co.com/physiotherapy-and-rehabilitation",type:"موقع شركة رسمي",publisher:"SERVOMED",accessedAt:"2026-11-09",status:"verified",notes:"يدعم أقسام المنتجات وبيانات الاتصال والعنوان وقائمة الوكلاء المنشورة."},
     {code:"SRC-00012",name:"Health Technology – Physiotherapy",url:"https://www.health-technology.net/physiotherapy/",type:"موقع شركة رسمي",publisher:"Health Technology",accessedAt:"2026-11-09",status:"verified",notes:"يدعم فئات المنتجات وبيانات الاتصال والعنوان."},
     {code:"SRC-00013",name:"PhysioWay – الموقع الرسمي",url:"https://physiowayeg.com/",type:"متجر متخصص رسمي",publisher:"PhysioWay",accessedAt:"2026-11-09",status:"verified",notes:"يدعم أقسام المتجر وبيانات التواصل والموقع المعلن."},
-    {code:"SRC-00014",name:"Ramses Medical Group – الموقع الرسمي",url:"https://ramsesmedical.net/",type:"موقع شركة رسمي",publisher:"Ramses Medical Group",accessedAt:"2026-11-09",status:"verified",notes:"يدعم قائمة الأجهزة والعلامات المعروضة وبيانات الاتصال المنشورة؛ لا يغني عن مستند تفويض ساري."}
+    {code:"SRC-00014",name:"Ramses Medical Group – الموقع الرسمي",url:"https://ramsesmedical.net/",type:"موقع شركة رسمي",publisher:"Ramses Medical Group",accessedAt:"2026-11-09",status:"verified",notes:"يدعم قائمة الأجهزة والعلامات المعروضة وبيانات الاتصال المنشورة؛ لا يغني عن مستند تفويض ساري."},
+    {code:"SRC-00015",name:"PhysioEgypt Clinics – الموقع الرسمي",url:"https://www.physioegyptclinics.com/",type:"موقع منشأة رسمي",publisher:"PhysioEgypt Clinics",accessedAt:"2026-11-09",status:"verified",notes:"يدعم بيانات فروع المعادي والشيخ زايد ووسيلة التواصل المنشورة."},
+    {code:"SRC-00016",name:"Medicure Clinics – الموقع الرسمي",url:"https://medicureclinics.net/",type:"موقع منشأة رسمي",publisher:"Medicure Clinics",accessedAt:"2026-11-09",status:"verified",notes:"يدعم خدمات العلاج الطبيعي وفروع القاهرة وأرقام التواصل المنشورة."},
+    {code:"SRC-00017",name:"101 Clinics – Physiotherapy & Pain Management",url:"https://www.101clinics.com/en/clinics/physiotherapy",type:"موقع منشأة رسمي",publisher:"101 Clinics",accessedAt:"2026-11-09",status:"verified",notes:"يدعم تخصص العلاج الطبيعي وإعادة التأهيل وبيانات فرع القاهرة الجديدة والتواصل."}
   ]
 };
