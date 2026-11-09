@@ -18,6 +18,53 @@
   const addField = (view, field) => {
     if (schemas[view] && !schemas[view].some(x => x[0] === field[0])) schemas[view].push(field);
   };
+  // Product-to-original-manufacturer identity and evidence fields.
+  addField("devices", ["originalFactoryCode","المصنع الأصلي (ليس المورد المحلي)","ref:suppliers"]);
+  addField("devices", ["manufacturerModel","اسم الموديل لدى المصنع","text"]);
+  addField("devices", ["manufacturerPartNumber","كود المصنع / Part No.","text"]);
+  addField("devices", ["oemModel","موديل OEM / ODM إن وجد","text"]);
+  addField("devices", ["modelMatchStatus","حالة مطابقة المصنع","select:not_checked,possible_match,documented_match,confirmed_by_factory,rejected"]);
+  addField("devices", ["matchEvidenceType","نوع دليل المطابقة","select:official_catalog,label_photo,manual,certificate,manufacturer_email,other"]);
+  addField("devices", ["matchEvidenceUrl","رابط دليل المطابقة","url"]);
+  addField("devices", ["matchVerifiedAt","تاريخ التحقق من المطابقة","date"]);
+  addField("sourcing", ["manufacturerModel","اسم الموديل لدى المصنع","text"]);
+  addField("sourcing", ["manufacturerPartNumber","كود المصنع / Part No.","text"]);
+  addField("sourcing", ["matchEvidenceType","نوع دليل المطابقة","select:official_catalog,label_photo,manual,certificate,manufacturer_email,other"]);
+  addField("sourcing", ["matchEvidenceUrl","رابط دليل المطابقة","url"]);
+  addField("sourcing", ["matchVerifiedAt","تاريخ التحقق","date"]);
+  // A quote can carry all three Incoterm prices; values must be for the same configuration and quantity.
+  [
+    ["exwPrice","سعر EXW للوحدة","number"],
+    ["fobPrice","سعر FOB للوحدة","number"],
+    ["cifPrice","سعر CIF للوحدة","number"],
+    ["incotermCurrency","عملة الأسعار الثلاثة","select:USD,CNY,EUR,EGP"],
+    ["namedPlace","مكان EXW / ميناء FOB","text"],
+    ["destinationPort","ميناء الوصول CIF (مثلاً Port Said / Alexandria)","text"],
+    ["moq","الحد الأدنى للطلب MOQ","number"],
+    ["leadTimeDays","مدة التجهيز بالأيام","number"],
+    ["paymentTerms","شروط الدفع","text"],
+    ["warrantyMonths","الضمان بالشهور","number"],
+    ["quoteValidUntil","صلاحية العرض حتى","date"],
+    ["packingDetails","الأبعاد والوزن والتعبئة","textarea"],
+    ["includedAccessories","الملحقات الداخلة في السعر","textarea"],
+    ["certificates","الشهادات والمستندات المتاحة","textarea"],
+    ["manufacturerConfirmation","تأكيد المصنع للموديل","select:not_requested,requested,confirmed,not_confirmed"],
+    ["quoteDocumentUrl","رابط ملف عرض السعر","url"]
+  ].forEach(f => addField("quotes", f));
+  if (config.quotes) {
+    config.quotes.cols.push(["exwPrice","EXW"],["fobPrice","FOB"],["cifPrice","CIF"],["incotermCurrency","العملة"],["quoteValidUntil","صالح حتى"],["status","الحالة"]);
+  }
+  Object.assign(titles, {quoteComparison:"مقارنة عروض الموردين"});
+  const nav = $("#main-nav");
+  if (nav && !nav.querySelector('[data-view="quoteComparison"]')) {
+    const anchor = nav.querySelector('[data-view="quotes"]');
+    const b = document.createElement("button");
+    b.className = "nav-link";
+    b.dataset.view = "quoteComparison";
+    b.innerHTML = "<span>⇅</span> مقارنة عروض الموردين";
+    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(b, anchor.nextSibling);
+    else nav.appendChild(b);
+  }
   // Add provenance fields to legacy forms without replacing existing fields.
   ["devices","consumables","companies","suppliers","brands","distributors","quotes","prices","logistics","regulatory"].forEach(view => {
     addField(view, ["recordOrigin","نوع المعلومة","select:published,field,commercial_sensitive"]);
@@ -265,12 +312,28 @@
       '<div class="panel"><div class="panel-head"><h3>تفاصيل الرصد ومصادر الأسعار</h3><span class="subtle">'+filtered.length+' سجل</span></div><div class="table-wrap"><table><thead><tr><th>الجهاز</th><th>البائع</th><th>السعر</th><th>تاريخ الرصد</th><th>المصدر</th><th>الحالة</th></tr></thead><tbody>'+(priceRows||'<tr><td colspan="6" class="empty">لا توجد أرصدة.</td></tr>')+'</tbody></table></div></div>';
   }
 
+  function quoteComparisonPage() {
+    const rows = (D.quotes || []).filter(q => q.exwPrice || q.fobPrice || q.cifPrice || q.price);
+    const products = D.devices || [];
+    const companies = [...(D.companies || []), ...(D.suppliers || [])];
+    const name = (code) => { const x = [...products,...companies].find(v=>v.code===code); return x ? (x.name || x.product || code) : (code || "غير محدد"); };
+    const groups = new Map();
+    rows.forEach(q => { const k=q.productCode || "غير مربوط بموديل"; if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(q); });
+    const body = [...groups.entries()].map(([productCode, items]) => {
+      const currencies = [...new Set(items.map(q=>q.incotermCurrency || q.currency).filter(Boolean))];
+      const comparable = currencies.length===1 ? items.filter(q=>Number(q.cifPrice || 0)>0).sort((a,b)=>Number(a.cifPrice)-Number(b.cifPrice)) : [];
+      const tr = items.map(q => '<tr><td>'+escI(name(q.supplierCode))+'</td><td>'+escI(q.exwPrice||"—")+'</td><td>'+escI(q.fobPrice||"—")+'</td><td><b>'+escI(q.cifPrice||"—")+'</b></td><td>'+escI(q.incotermCurrency||q.currency||"—")+'</td><td>'+escI(q.quoteValidUntil||q.expiresAt||"—")+'</td><td>'+escI(q.status||"—")+'</td><td>'+ (q.quoteDocumentUrl?'<a href="'+escI(q.quoteDocumentUrl)+'" target="_blank" rel="noopener">المستند ↗</a>':"—")+'</td></tr>').join("");
+      const best = comparable[0];
+      return '<section class="panel" style="margin-bottom:16px"><div class="panel-head"><h3>'+escI(name(productCode))+'</h3><span class="subtle">'+items.length+' عرض · '+(currencies.length===1?escI(currencies[0]):"عملات مختلفة — لا تجوز المقارنة الرقمية")+'</span></div>'+(best?'<div class="mi-warning">أقل CIF مسجل بهذه العملة: <b>'+escI(name(best.supplierCode))+' — '+Number(best.cifPrice).toLocaleString("en-US")+' '+escI(currencies[0])+'</b>. لا يعني ذلك أنه الأقل تكلفة واصلة بعد الجمارك والضرائب.</div>':"")+'<div class="table-wrap"><table><thead><tr><th>المورد</th><th>EXW</th><th>FOB</th><th>CIF</th><th>العملة</th><th>الصلاحية</th><th>حالة العرض</th><th>المستند</th></tr></thead><tbody>'+tr+'</tbody></table></div></section>';
+    }).join("");
+    return '<div class="section-head"><div><h2>مقارنة عروض الموردين</h2><p>مقارنة الأسعار الموثقة لنفس الموديل والتكوين والكمية والعملة؛ السعر الأقل لا يساوي تلقائيًا أقل تكلفة واصلة.</p></div><div class="section-actions"><button class="btn secondary" id="qc-add">+ تسجيل عرض مورد</button><button class="btn secondary" id="qc-rfq">تحميل نموذج طلب عرض سعر RFQ</button></div></div><div class="mi-warning"><b>مهم:</b> لم يتم إرسال أي طلبات للمصانع أو الموردين من داخل المنصة. النموذج التالي ملف جاهز للتعبئة والإرسال يدويًا. لا تُقارن EXW/FOB/CIF إلا بعد توحيد المواصفات والكمية وميناء الشحن والوصول وتاريخ صلاحية العرض.</div>'+(body||'<div class="panel empty">لا توجد عروض EXW / FOB / CIF مسجلة حتى الآن. أضف عرضًا بعد استلام مستند رسمي من المورد.</div>');
+  }
   const originalRender = render;
   render = function() {
-    if (currentView === "backup" || currentView === "audit" || currentView === "priceIntelligence") {
+    if (currentView === "backup" || currentView === "audit" || currentView === "priceIntelligence" || currentView === "quoteComparison") {
       $("#page-title").textContent = titles[currentView];
       document.querySelectorAll(".nav-link").forEach(b=>b.classList.toggle("active",b.dataset.view===currentView));
-      content.innerHTML = currentView === "backup" ? backupPage() : currentView === "audit" ? auditPage() : priceIntelligencePage();
+      content.innerHTML = currentView === "backup" ? backupPage() : currentView === "audit" ? auditPage() : currentView === "priceIntelligence" ? priceIntelligencePage() : quoteComparisonPage();
       return;
     }
     originalRender();
@@ -280,6 +343,33 @@
     if (e.target.id === "pi-product-filter") render();
   });
   content.addEventListener("click", e => {
+    if (e.target.closest("#qc-add")) go("quotes");
+    if (e.target.closest("#qc-rfq")) {
+      const template = [
+        "REQUEST FOR QUOTATION (RFQ) — PHYSIO MARKET",
+        "",
+        "Please quote the exact model and configuration below:",
+        "Brand / Product: [ ]",
+        "Manufacturer model: [ ]",
+        "Manufacturer part number / product code: [ ]",
+        "Technical specification / configuration: [attach specification]",
+        "Required quantity: [ ]",
+        "Please provide separate unit prices for:",
+        "1) EXW — named factory / warehouse address",
+        "2) FOB — named port of shipment (Incoterms 2020)",
+        "3) CIF — Port of Alexandria or Port Said, Egypt (Incoterms 2020)",
+        "",
+        "For each offer please state: currency, MOQ, production lead time, packing dimensions and gross/net weight, accessories included, warranty, spare parts availability, payment terms, quotation validity, country of origin, HS code proposed by exporter, certificates (ISO 13485 / CE where applicable), product registration documents, and photos of the product label/nameplate.",
+        "",
+        "Please confirm whether you are the original legal manufacturer or an authorized exporter/OEM factory. If OEM/ODM, identify the legal manufacturer and provide evidence of the model relationship.",
+        "",
+        "Please attach an official signed/stamped quotation and current product catalogue/manual.",
+        "",
+        "Note: Prices must refer to the same configuration and quantity. CIF insurance coverage and named destination must be specified."
+      ].join("\\n");
+      const blob = new Blob(["\\uFEFF"+template], {type:"text/plain;charset=utf-8"});
+      const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="PHYSIO-MARKET-RFQ-template.txt"; a.click(); URL.revokeObjectURL(url);
+    }
     if (e.target.closest("#pi-add-price")) openForm("prices");
     if (e.target.closest("#pi-export-csv")) {
       const rows=D.priceSnapshots||[];
