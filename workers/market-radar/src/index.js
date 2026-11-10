@@ -1,5 +1,6 @@
 /**
  * PHYSIO MARKET — live market discovery Worker
+ * GitHub deployment trigger: 2026-11-10
  * Provider: Tavily Search API (basic depth; normally one credit per query).
  * Required Cloudflare secrets: TAVILY_API_KEY, RADAR_ACCESS_TOKEN.
  * Never put either secret in browser code or GitHub.
