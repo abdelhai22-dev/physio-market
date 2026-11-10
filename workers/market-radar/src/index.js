@@ -1,7 +1,8 @@
 /**
  * PHYSIO MARKET — live market discovery Worker
- * Deploy as a Cloudflare Worker. Set BRAVE_API_KEY and RADAR_ACCESS_TOKEN
- * with `wrangler secret put`; never commit secrets.
+ * Provider: Tavily Search API (basic depth; normally one credit per query).
+ * Required Cloudflare secrets: TAVILY_API_KEY, RADAR_ACCESS_TOKEN.
+ * Never put either secret in browser code or GitHub.
  */
 const corsHeaders = origin => ({
   "Access-Control-Allow-Origin": origin || "*",
@@ -13,7 +14,10 @@ const json = (data, status=200, origin="*") => new Response(JSON.stringify(data)
   status, headers: { "Content-Type":"application/json; charset=utf-8", ...corsHeaders(origin) }
 });
 const clean = value => String(value || "").replace(/[<>]/g,"").trim().slice(0,180);
-const safeHttpUrl = value => { try { const u=new URL(value); return ["http:","https:"].includes(u.protocol)?u.toString():""; } catch (_) { return ""; } };
+const safeHttpUrl = value => {
+  try { const u=new URL(value); return ["http:","https:"].includes(u.protocol)?u.toString():""; }
+  catch (_) { return ""; }
+};
 const hasPromo = text => /sale|discount|offer|special price|clearance|خصم|عرض خاص|تخفيض|وفر|بدلًا من|بدلا من/i.test(text);
 const priceFromText = text => {
   const patterns = [
@@ -38,30 +42,42 @@ async function searchOne(product, market, env) {
   const query = market === "EG"
     ? (exact + " " + identity + " سعر مصر OR price EGP")
     : (exact + " " + identity + " manufacturer supplier price China");
-  const url = new URL("https://api.search.brave.com/res/v1/web/search");
-  url.searchParams.set("q", query.slice(0,580));
-  url.searchParams.set("country", market);
-  url.searchParams.set("search_lang", market === "EG" ? "ar" : "en");
-  url.searchParams.set("count", "6");
-  const response = await fetch(url, { headers: {
-    "Accept":"application/json",
-    "X-Subscription-Token":env.BRAVE_API_KEY
-  }});
-  if (!response.ok) throw new Error("Search provider returned " + response.status);
+  const response = await fetch("https://api.tavily.com/search", {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + env.TAVILY_API_KEY,
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify({
+      query: query.slice(0,380),
+      search_depth: "basic",
+      topic: "general",
+      max_results: 5,
+      chunks_per_source: 2,
+      include_answer: false,
+      include_raw_content: false,
+      include_published_date: true,
+      country: market === "EG" ? "egypt" : "china",
+      language: market === "EG" ? "ar" : "en",
+      include_usage: true
+    })
+  });
+  if (!response.ok) throw new Error("Tavily API returned HTTP " + response.status);
   const data = await response.json();
-  return (data.web?.results || []).map(item => {
-    const text = [item.title,item.description,...(item.extra_snippets||[])].filter(Boolean).join(" ");
+  const results = (data.results || []).map(item => {
+    const text = [item.title,item.content].filter(Boolean).join(" ");
     return {
       productCode:product.code,
       productLabel:[product.brand,product.name,product.model].filter(Boolean).join(" · ") || product.code,
-      market:market,
+      market,
       marketLabel:market === "EG" ? "بحث السوق المصري" : "بحث الموردين العالميين / الصين",
       title:clean(item.title),
-      description:clean(item.description),
+      description:clean(item.content),
       url:safeHttpUrl(item.url),
-      age:item.age || null,
+      age:item.published_date || null,
       observedAt:new Date().toISOString(),
-      query:query,
+      query,
       priceText:priceFromText(text),
       promotionHint:hasPromo(text),
       expiryText:expiryFromText(text) || "غير معلن في المقتطف",
@@ -69,42 +85,75 @@ async function searchOne(product, market, env) {
       currentPrice:null,
       discountPercent:null,
       availability:"غير محدد — يحتاج تحققًا من المصدر",
-      evidenceLevel:"search_snippet_unverified"
+      evidenceLevel:"search_snippet_unverified",
+      relevanceScore:Number.isFinite(Number(item.score))?Number(item.score):null
     };
-  });
+  }).filter(item=>item.url);
+  return {results, credits:Number(data.usage?.credits)||1};
 }
 export default {
   async fetch(request, env) {
-    const origin = request.headers.get("Origin") || "*";
-    if (request.method === "OPTIONS") return new Response(null,{status:204,headers:corsHeaders(env.ALLOWED_ORIGIN || origin)});
+    const requestOrigin = request.headers.get("Origin") || "";
+    const allowedOrigin = env.ALLOWED_ORIGIN || "*";
+    const responseOrigin = allowedOrigin === "*" ? (requestOrigin || "*") : allowedOrigin;
+    if (request.method === "OPTIONS") {
+      if (allowedOrigin !== "*" && requestOrigin && requestOrigin !== allowedOrigin) {
+        return new Response(null,{status:403,headers:corsHeaders(allowedOrigin)});
+      }
+      return new Response(null,{status:204,headers:corsHeaders(responseOrigin)});
+    }
     const url = new URL(request.url);
-    if (url.pathname === "/health") return json({ok:true,service:"physio-market-radar",provider:env.BRAVE_API_KEY?"configured":"missing_api_key"},200,env.ALLOWED_ORIGIN||origin);
-    if (url.pathname !== "/scan" || request.method !== "POST") return json({error:"Not found"},404,env.ALLOWED_ORIGIN||origin);
-    if (!env.BRAVE_API_KEY || !env.RADAR_ACCESS_TOKEN) return json({error:"Worker secrets are not configured."},503,env.ALLOWED_ORIGIN||origin);
-    if (request.headers.get("Authorization") !== "Bearer " + env.RADAR_ACCESS_TOKEN) return json({error:"Unauthorized"},401,env.ALLOWED_ORIGIN||origin);
-    if (env.ALLOWED_ORIGIN && origin !== env.ALLOWED_ORIGIN) return json({error:"Origin not allowed"},403,env.ALLOWED_ORIGIN);
+    if (allowedOrigin !== "*" && requestOrigin && requestOrigin !== allowedOrigin) {
+      return json({error:"Origin not allowed"},403,allowedOrigin);
+    }
+    if (url.pathname === "/health" && request.method === "GET") {
+      return json({
+        ok:true,
+        service:"physio-market-radar",
+        provider:env.TAVILY_API_KEY?"configured":"missing_api_key",
+        accessToken:env.RADAR_ACCESS_TOKEN?"configured":"missing_access_token"
+      },200,responseOrigin);
+    }
+    if (url.pathname !== "/scan" || request.method !== "POST") {
+      return json({error:"Not found"},404,responseOrigin);
+    }
+    if (!env.TAVILY_API_KEY || !env.RADAR_ACCESS_TOKEN) {
+      return json({error:"Worker secrets are not configured."},503,responseOrigin);
+    }
+    if (request.headers.get("Authorization") !== "Bearer " + env.RADAR_ACCESS_TOKEN) {
+      return json({error:"Unauthorized"},401,responseOrigin);
+    }
     let body;
-    try { body=await request.json(); } catch (_) { return json({error:"Invalid JSON"},400,env.ALLOWED_ORIGIN||origin); }
+    try { body=await request.json(); }
+    catch (_) { return json({error:"Invalid JSON"},400,responseOrigin); }
     const products=Array.isArray(body.products)?body.products.slice(0,8):[];
-    if (!products.length) return json({results:[],message:"No products in request"},200,env.ALLOWED_ORIGIN||origin);
-    const markets=["EG","CN"];
+    if (!products.length) return json({ok:true,results:[],creditsUsed:0,message:"No products in request"},200,responseOrigin);
     const tasks=[];
     for (const raw of products) {
       const product={code:clean(raw.code),name:clean(raw.name),brand:clean(raw.brand),model:clean(raw.model)};
       if (!product.code || !(product.name || product.model)) continue;
-      for (const market of markets) tasks.push({product,market});
+      tasks.push({product,market:"EG"},{product,market:"CN"});
     }
     const results=[];
     const errors=[];
-    for (let i=0;i<tasks.length;i+=3) {
-      const chunk=tasks.slice(i,i+3);
-      const settled=await Promise.allSettled(chunk.map(t=>searchOne(t.product,t.market,env)));
+    let creditsUsed=0;
+    for (let i=0;i<tasks.length;i+=2) {
+      const settled=await Promise.allSettled(tasks.slice(i,i+2).map(t=>searchOne(t.product,t.market,env)));
       for (const item of settled) {
-        if(item.status==="fulfilled") results.push(...item.value);
-        else errors.push(String(item.reason?.message || "Search request failed"));
+        if(item.status==="fulfilled") {
+          results.push(...item.value.results);
+          creditsUsed+=item.value.credits;
+        } else errors.push(String(item.reason?.message || "Search request failed"));
       }
     }
-    if(!results.length && errors.length) return json({error:"Search provider failed: "+errors[0]},502,env.ALLOWED_ORIGIN||origin);
-    return json({ok:true,scannedProducts:products.length,results,partialErrors:errors.length,scannedAt:new Date().toISOString()},200,env.ALLOWED_ORIGIN||origin);
+    if(!results.length && errors.length) {
+      const statusMatch=errors[0].match(/HTTP (\d{3})/);
+      const status=statusMatch?Number(statusMatch[1]):502;
+      return json({error:"Tavily search failed. Check the API key, usage balance, and rate limits.",providerStatus:status},502,responseOrigin);
+    }
+    return json({
+      ok:true,provider:"Tavily",scannedProducts:products.length,results,creditsUsed,
+      partialErrors:errors.length,scannedAt:new Date().toISOString()
+    },200,responseOrigin);
   }
 };
