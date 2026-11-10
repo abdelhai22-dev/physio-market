@@ -5,3 +5,12 @@ workers_dev = true
 
 [vars]
 ALLOWED_ORIGIN = "https://abdelhai22-dev.github.io"
+
+# Approximate per-IP protection for the public no-login scan endpoint.
+[[ratelimits]]
+name = "RADAR_RATE_LIMITER"
+namespace_id = "2026111001"
+
+[ratelimits.simple]
+limit = 10
+period = 60
