@@ -199,6 +199,56 @@
       (s.evidence&&s.evidence.length?'<ul>'+s.evidence.map(e=>'<li>'+esc(e)+'</li>').join("")+'</ul>':"")+
       '<div class="mr-action"><b>الخطوة التالية:</b> '+esc(s.action)+'</div><div class="mr-card-foot">'+(src?'<span>'+src+'</span>':"<span>لا يوجد رابط مصدر مباشر في الإشارة</span>")+'<div class="mr-case-action">'+(productMap.has(s.targetCode)?'<button class="btn tiny" data-mr-case="'+esc(s.targetCode)+'">'+(arr("marketRadarCases").some(c=>c.productCode===s.targetCode)?"فتح بطاقة المتابعة":"إنشاء بطاقة فرصة")+'</button>':"")+'<button class="btn tiny secondary" data-radar-go="'+esc(s.targetView)+'">فتح القسم المرتبط</button></div></div></article>';
   }
+
+  // Live online discovery — requires the separately deployed Worker endpoint.
+  let onlineResults=[];
+  let onlineStatus="idle";
+  let onlineProgress="";
+  let onlineLastScan="";
+  const scanConfig=()=>{
+    try{return JSON.parse(localStorage.getItem("physio-market-radar-config-v1")||"{}");}
+    catch(_){return {};}
+  };
+  const saveScanConfig=cfg=>{
+    try{localStorage.setItem("physio-market-radar-config-v1",JSON.stringify(cfg));return true;}
+    catch(_){return false;}
+  };
+  const onlineSection=()=>{
+    const cfg=scanConfig();
+    const cards=onlineResults.map(r=>{
+      const price=r.priceText?'<div class="mr-online-price"><b>'+esc(r.priceText)+'</b><small>مؤشر سعر من مقتطف البحث — غير مؤكد حتى فتح المصدر</small></div>':'<div class="mr-online-no-price">لم يظهر سعر قابل للاستخراج بوضوح في مقتطف البحث</div>';
+      const promo=r.promotionHint?'<span class="mr-online-promo">عبارات ترويجية بالمقتطف · تحتاج تحقق</span>':'';
+      return '<article class="mr-online-card"><div class="mr-online-card-top"><span>'+esc(r.marketLabel||"مصدر ويب")+'</span><small>'+esc(r.observedAt||"وقت الرصد غير متاح")+'</small></div><h4>'+esc(r.title||"نتيجة بحث")+'</h4><p>'+esc(r.description||"لا يوجد وصف متاح")+'</p>'+price+promo+'<div class="mr-online-meta"><span>الموديل: '+esc(r.productLabel||"غير محدد")+'</span><span>الانتهاء: '+esc(r.expiryText||"غير معلن في المصدر")+'</span></div><a href="'+esc(r.url)+'" target="_blank" rel="noopener noreferrer">فتح المصدر الأصلي ↗</a><small class="mr-online-query">استعلام: '+esc(r.query||"")+'</small></article>';
+    }).join("");
+    return '<div class="mr-scan-panel" id="mr-online-scan-panel"><div class="mr-scan-panel-head"><div><b>محرك البحث الحيّ</b><p>يرسل موديلات القاعدة إلى خدمة بحث آمنة، ويعيد روابط المصادر ومقتطفاتها داخل الرادار. مفتاح Brave يبقى على الخادم ولا يوضع في الموقع.</p></div><span class="mr-scan-count">'+allProducts.length+' منتجًا في القاعدة</span></div>'+
+      '<div class="mr-online-config"><label><span>رابط محرك الرصد (Worker URL)</span><input id="mr-worker-url" type="url" placeholder="https://your-worker.workers.dev" value="'+esc(cfg.endpoint||"")+'"></label><label><span>رمز الوصول الخاص بالمحرك</span><input id="mr-worker-token" type="password" autocomplete="off" placeholder="أدخل رمز الوصول الذي ضبطته على الخادم" value="'+esc(cfg.token||"")+'"></label><button class="btn secondary" id="mr-save-config" type="button">حفظ الإعدادات على هذا الجهاز</button></div>'+
+      '<div class="mr-online-controls"><button class="mr-scan-button" id="mr-run-live-scan" type="button" '+(onlineStatus==="running"?"disabled":"")+'><b>'+(onlineStatus==="running"?"المسح جارٍ...":"ابدأ البحث الأونلاين الآن")+'</b></button><span class="mr-online-state">'+esc(onlineStatus==="running"?onlineProgress:onlineStatus==="done"?"اكتمل البحث · "+onlineResults.length+" نتيجة":onlineStatus==="error"?onlineProgress:"جاهز لبدء المسح بعد ضبط الاتصال")+'</span></div>'+
+      (onlineLastScan?'<div class="mr-online-last">آخر تشغيل: '+esc(onlineLastScan)+'</div>':"")+
+      (cards?'<div class="mr-online-results"><h3>نتائج المصادر المكتشفة</h3><div class="mr-online-grid">'+cards+'</div></div>':"")+
+      '<div class="mr-scan-note"><b>حدود الدقة:</b> نتيجة البحث ليست عرض سعر مؤكدًا. السعر السابق والحالي والخصم ومدة العرض لا تظهر إلا إذا قدم المصدر بيانات صريحة قابلة للتحقق؛ لا يخمّن الرادار تاريخ انتهاء أو توافر مخزون. لا توجد مقارنة بين موديلات مختلفة.</div></div>';
+  };
+  async function runOnlineScan(){
+    const cfg=scanConfig();
+    if(!cfg.endpoint||!cfg.token){onlineStatus="error";onlineProgress="احفظ رابط Worker ورمز الوصول أولًا.";render();return;}
+    onlineStatus="running";onlineResults=[];onlineProgress="جارٍ تجهيز المنتجات...";render();
+    const products=allProducts.map(p=>({code:p.code,name:p.name||p.productName||p.title||"",brand:p.brand||"",model:p.model||"",category:p.category||"",type:arr("devices").some(x=>x.code===p.code)?"device":"consumable"}));
+    try{
+      const batchSize=8;
+      for(let i=0;i<products.length;i+=batchSize){
+        const batch=products.slice(i,i+batchSize);
+        onlineProgress="تم فحص "+Math.min(i,products.length)+" من "+products.length+" منتجًا...";
+        const response=await fetch(cfg.endpoint.replace(/\/$/,"")+"/scan",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+cfg.token},body:JSON.stringify({products:batch,markets:["EG","CN"]})});
+        if(!response.ok)throw new Error("الخادم أعاد "+response.status+" — راجع إعدادات Worker ورمز الوصول.");
+        const payload=await response.json();
+        if(!Array.isArray(payload.results))throw new Error("صيغة استجابة محرك الرصد غير صحيحة.");
+        onlineResults=onlineResults.concat(payload.results);
+        onlineProgress="تم فحص "+Math.min(i+batch.length,products.length)+" من "+products.length+" منتجًا...";
+        render();
+      }
+      onlineStatus="done";onlineProgress="";onlineLastScan=new Date().toLocaleString("ar-EG");render();
+    }catch(err){onlineStatus="error";onlineProgress=err&&err.message?err.message:"تعذر الاتصال بمحرك الرصد.";render();}
+  }
+
   function radarPage(){
     const selected=$("#mr-filter")?.value||"all";
     const filtered=selected==="all"?signals:signals.filter(x=>x.kind===selected);
@@ -210,9 +260,9 @@
       ["تحققات معلقة",counts.verify,"shield"],
       ["بيانات تحتاج استكمالًا",counts.data,"file"]
     ];
-    return '<div class="mr-hero"><div><span class="mr-eyebrow">A&amp;S MEDICAL · MARKET INTELLIGENCE</span><h2>رادار فرص السوق</h2><p>محرك يقرأ بيانات السوق الحالية ويحوّلها إلى إشارات مرتبة حسب حرارة الفرصة وجودة الدليل.</p></div><div class="mr-hero-actions"><div class="mr-live"><i></i> التحليل المحلي جاهز</div><button class="mr-scan-button" id="mr-online-scan" type="button"><span>⌕</span><b>ابدأ المسح الذكي للسوق</b><small>ONLINE PRICE DISCOVERY</small></button></div></div>'+
-      '<div class="mr-scan-panel" id="mr-online-scan-panel" hidden><div class="mr-scan-panel-head"><div><b>مسح الأسعار عبر الإنترنت</b><p>جهزنا استعلامات بحث مباشرة لكل موديل مسجل. افتح النتائج، تحقق من السعر والتوفر والمواصفات، ثم سجّل الرصد ليعيد الرادار حساب حرارة الفرصة.</p></div><span class="mr-scan-count">'+allProducts.length+' منتج</span></div><div class="mr-scan-list">'+allProducts.map(p=>{const terms=[p.brand,p.model,p.name,p.code,"سعر مصر EGP"].filter(Boolean).join(" ");const q=encodeURIComponent(terms);return '<div class="mr-scan-row"><div><b>'+esc(nameOf(p))+'</b><small>'+esc(p.code||"")+' · '+esc([p.brand,p.model].filter(Boolean).join(" / "))+'</small></div><div class="mr-scan-links"><a href="https://www.google.com/search?q='+q+'" target="_blank" rel="noopener noreferrer">Google ↗</a><a href="https://www.bing.com/search?q='+q+'" target="_blank" rel="noopener noreferrer">Bing ↗</a><button type="button" class="btn tiny secondary" data-mr-add-price="'+esc(p.code)+'">تسجيل سعر</button></div></div>';}).join("")+'</div><div class="mr-scan-note">تنبيه تقني: GitHub Pages لا يستطيع جلب أسعار المواقع تلقائيًا أو تجاوز حمايتها من المتصفح. هذه المرحلة تفتح بحثًا حيًا لكل موديل ولا تدّعي استخراج أسعار لم تتم قراءتها. بعد تسجيل سعر موثق، اضغط «تحديث التحليل» لإعادة احتساب المؤشرات.</div></div>'+
-      '<div class="mr-disclaimer"><b>حدود الرصد:</b> هذه المرحلة تحلل البيانات الموجودة فقط. لا يوجد زحف إنترنت أو تحديث خلفي تلقائي. لا تُعد فجوة البيانات دليلًا على غياب المنتج أو المورد من السوق، ولا تُعد فروق الأسعار هامش ربح مؤكدًا.</div>'+
+    return '<div class="mr-hero"><div><span class="mr-eyebrow">A&amp;S MEDICAL · MARKET INTELLIGENCE</span><h2>رادار فرص السوق</h2><p>محرك يجمع نتائج بحث ويب مباشرة لكل موديل، ويعرض المصدر ووقت الرصد ومؤشرات السعر مع فصل البيانات المؤكدة عن غير المؤكدة.</p></div><div class="mr-hero-actions"><div class="mr-live"><i></i> بحث ويب عند الطلب</div><button class="mr-scan-button" id="mr-online-scan" type="button"><span>⌕</span><b>ابدأ المسح الذكي للسوق</b><small>LIVE WEB DISCOVERY</small></button></div></div>'+
+      onlineSection()+
+      '<div class="mr-disclaimer"><b>حدود الرصد:</b> هذه المرحلة تحلل البيانات الموجودة فقط. لا تُعد مقتطفات البحث عروض أسعار مؤكدة. لا تُعد فجوة البيانات دليلًا على غياب المنتج أو المورد من السوق، ولا تُعد فروق الأسعار هامش ربح مؤكدًا.</div>'+
       '<div class="mr-kpis">'+stats.map(x=>'<div class="mr-kpi"><span>'+esc(x[0])+'</span><b>'+x[1]+'</b></div>').join("")+'</div>'+
       '<div class="mr-heat-legend"><b>مقياس الحرارة:</b><span class="cool">أخضر · أولوية منخفضة</span><span class="warm">أصفر · تحتاج دراسة</span><span class="hot">أحمر · أولوية مرتفعة</span><small>الحرارة لترتيب المتابعة وليست نسبة ربح أو توصية شراء.</small></div><div class="mr-toolbar"><div><h3>الإشارات المكتشفة</h3><p>آخر تاريخ رصد سعر متاح: '+(last||"لا توجد أرصدة أسعار")+' · '+signals.length+' إشارة إجمالًا</p></div><div class="mr-controls"><select id="mr-filter" aria-label="تصفية الإشارات"><option value="all">كل الإشارات</option><option value="opportunity">فرص استثمارية</option><option value="price">إنذارات سعرية</option><option value="gap">فجوات البيانات</option><option value="verification">مطابقة المصنع</option><option value="supplier">فرص الموردين</option><option value="quote">طلبات عروض الأسعار</option><option value="freshness">تحديث الأسعار</option><option value="manual">الفرص المسجلة</option></select><button class="btn secondary" id="mr-refresh">تحديث التحليل</button><button class="btn secondary" id="mr-export">تصدير الإشارات CSV</button></div></div>'+
       (filtered.length?'<div class="mr-list">'+filtered.map(card).join("")+'</div>':'<div class="panel empty">لا توجد إشارات من هذا النوع حاليًا. أضف بيانات موثقة أو غيّر عامل التصفية.</div>')+
@@ -242,7 +292,13 @@
     const goButton=e.target.closest("[data-radar-go]");
     if(goButton){go(goButton.dataset.radarGo);return;}
     const scanButton=e.target.closest("#mr-online-scan");
-    if(scanButton){const panel=$("#mr-online-scan-panel");if(panel){panel.hidden=!panel.hidden;scanButton.classList.toggle("is-active",!panel.hidden);if(!panel.hidden)panel.scrollIntoView({behavior:"smooth",block:"start"});}return;}
+    if(scanButton){const panel=$("#mr-online-scan-panel");if(panel){panel.scrollIntoView({behavior:"smooth",block:"start"});scanButton.classList.add("is-active");}return;}
+    if(e.target.closest("#mr-save-config")){
+      const endpoint=$("#mr-worker-url")?.value.trim()||"",token=$("#mr-worker-token")?.value.trim()||"";
+      if(!/^https:\/\//i.test(endpoint)||!token){alert("أدخل رابط HTTPS ورمز الوصول.");return;}
+      saveScanConfig({endpoint,token});alert("تم حفظ إعدادات محرك الرصد على هذا الجهاز.");return;
+    }
+    if(e.target.closest("#mr-run-live-scan")){runOnlineScan();return;}
     const addPrice=e.target.closest("[data-mr-add-price]");
     if(addPrice){const code=addPrice.dataset.mrAddPrice;go("prices");openForm("prices");const select=$("#record-form [name='productCode']");if(select)select.value=code;return;}
     if(e.target.closest("#mr-refresh")){render();return;}
