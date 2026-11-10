@@ -64,7 +64,7 @@
       title:"تفاوت سعري يستحق التحقق — "+productName(rows[0].productCode),
       summary:"تم رصد "+rows.length+" أسعار من "+sellers.size+" جهات بعملة واحدة؛ الفارق بين أقل وأعلى رصد "+spread.toFixed(1)+"%. هذا اختلاف أسعار منشورة وليس هامش ربح مؤكدًا.",
       evidence:rows.map(x=>x.seller+": "+money(x.amount,x.currency)+" · "+(x.observedAt||"تاريخ غير محدد")),
-      sources:rows.filter(x=>x.sourceUrl).map(x=>x.sourceUrl),
+      sources:rows.filter(x=>x.sourceUrl).map(x=>x.sourceUrl), qualityRows:rows, spreadPct:spread,
       action:"راجع تاريخ الرصد والتكوين والضمان والتوفر، ثم اطلب عرضًا موحد المواصفات.",
       targetView:"priceIntelligence",targetCode:rows[0].productCode,sort:1
     });
@@ -86,7 +86,7 @@
       title:"فارق تكلفة يستحق دراسة — "+productName(p.code),
       summary:"أعلى سعر محلي مرصود "+money(bestLocal,"EGP")+" مقابل أقل تكلفة وحدة واصلة مسجلة "+money(lowestLanded,"EGP")+"؛ الفارق الحسابي "+gross.toFixed(1)+"% قبل المصروفات التجارية والضمان والتشغيل والخصومات.",
       evidence:["عدد الرصود المحلية: "+local.length,"عدد حسابات التكلفة الواصلة: "+landed.length],
-      sources:local.filter(x=>x.sourceUrl).map(x=>x.sourceUrl),
+      sources:local.filter(x=>x.sourceUrl).map(x=>x.sourceUrl), qualityRows:local, marginGapPct:gross,
       action:"راجع HS Code والرسوم وصلاحية الأسعار، ثم أضف المصروفات التجارية قبل اتخاذ قرار شراء.",
       targetView:"landedCosts",targetCode:p.code,sort:0
     });
@@ -155,6 +155,30 @@
 
   const order={"مرتفع":0,"مراجعة":1,"متابعة":2};
   signals.sort((a,b)=>(order[a.severity]??3)-(order[b.severity]??3)||(a.sort??9)-(b.sort??9));
+
+  // Opportunity heat is a prioritization signal, not a profit or investment guarantee.
+  const heatScore = s => {
+    let score = s.kind==="opportunity" ? 62 : s.kind==="price" ? 48 : s.kind==="manual" ? 45 : s.kind==="freshness" ? 30 : 18;
+    if (s.kind==="opportunity") score += Math.min(22, n(s.marginGapPct)*0.65);
+    if (s.kind==="price") score += Math.min(20, n(s.spreadPct)*0.35);
+    score += s.severity==="مرتفع" ? 10 : s.severity==="مراجعة" ? 5 : 0;
+    score += s.confidence==="مرتفعة" ? 8 : s.confidence==="متوسطة" ? 4 : 0;
+    return Math.max(5,Math.min(95,Math.round(score)));
+  };
+  const qualityOf = s => {
+    const rows=Array.isArray(s.qualityRows)?s.qualityRows:[];
+    if (!rows.length) {
+      const fallback=s.confidence==="مرتفعة"?72:s.confidence==="متوسطة"?54:30;
+      return {score:fallback,label:fallback>=70?"جيدة":fallback>=45?"متوسطة":"ضعيفة"};
+    }
+    const verified=rows.filter(x=>["verified","confirmed","approved"].includes(String(x.status||"").toLowerCase())).length;
+    const linked=rows.filter(x=>/^https?:\\/\\//i.test(String(x.sourceUrl||""))).length;
+    const recent=rows.filter(x=>{const d=dayDiff(x.observedAt);return d!==null&&d<=30;}).length;
+    const score=Math.round((verified/rows.length)*65+(linked/rows.length)*15+(recent/rows.length)*20);
+    return {score,label:score>=70?"جيدة":score>=45?"متوسطة":"ضعيفة"};
+  };
+  const heatLabel = score => score>=70?"حرارة مرتفعة":score>=40?"حرارة متوسطة":"حرارة منخفضة";
+
   const counts={
     investment:signals.filter(x=>x.kind==="opportunity").length,
     gaps:signals.filter(x=>x.kind==="gap").length,
@@ -164,8 +188,14 @@
   };
   function card(s){
     const tone=s.severity==="مرتفع"?"is-high":s.severity==="متابعة"?"is-follow":"";
-    const src=(s.sources||[]).filter(u=>/^https?:\/\//i.test(String(u))).map((u,i)=>'<a href="'+esc(u)+'" target="_blank" rel="noopener">مصدر '+(i+1)+' ↗</a>').join(" · ");
-    return '<article class="mr-signal '+tone+'"><div class="mr-signal-top"><span class="mr-tag">'+esc(s.label)+'</span><span class="mr-confidence">قوة الدليل: '+esc(s.confidence)+'</span></div><h3>'+esc(s.title)+'</h3><p>'+esc(s.summary)+'</p>'+
+    const heat=heatScore(s), quality=qualityOf(s);
+    const heatTone=heat>=70?"hot":heat>=40?"warm":"cool";
+    const qualityTone=quality.score>=70?"good":quality.score>=45?"mid":"weak";
+    const src=(s.sources||[]).filter(u=>/^https?:\\/\\//i.test(String(u))).map((u,i)=>'<a href="'+esc(u)+'" target="_blank" rel="noopener">مصدر '+(i+1)+' ↗</a>').join(" · ");
+    return '<article class="mr-signal '+tone+' mr-heat-'+heatTone+'"><div class="mr-signal-top"><span class="mr-tag">'+esc(s.label)+'</span><span class="mr-confidence">قوة الدليل: '+esc(s.confidence)+'</span></div>'+
+      '<div class="mr-heat-panel"><div class="mr-heat-head"><span>مؤشر حرارة الفرصة</span><b>'+heat+' / 100 · '+heatLabel(heat)+'</b></div><div class="mr-heat-track" style="--heat:'+heat+'%" role="img" aria-label="حرارة الفرصة '+heat+' من 100"><i></i></div><div class="mr-heat-scale"><span>منخفضة</span><span>متوسطة</span><span>مرتفعة</span></div></div>'+
+      '<h3>'+esc(s.title)+'</h3><p>'+esc(s.summary)+'</p>'+
+      '<div class="mr-quality"><span class="mr-quality-dot '+qualityTone+'"></span><b>جودة الرصد: '+esc(quality.label)+'</b><strong>'+quality.score+'%</strong><small>تعتمد على حالة التحقق ووجود المصدر وحداثة الرصد</small></div>'+
       (s.evidence&&s.evidence.length?'<ul>'+s.evidence.map(e=>'<li>'+esc(e)+'</li>').join("")+'</ul>':"")+
       '<div class="mr-action"><b>الخطوة التالية:</b> '+esc(s.action)+'</div><div class="mr-card-foot">'+(src?'<span>'+src+'</span>':"<span>لا يوجد رابط مصدر مباشر في الإشارة</span>")+'<div class="mr-case-action">'+(productMap.has(s.targetCode)?'<button class="btn tiny" data-mr-case="'+esc(s.targetCode)+'">'+(arr("marketRadarCases").some(c=>c.productCode===s.targetCode)?"فتح بطاقة المتابعة":"إنشاء بطاقة فرصة")+'</button>':"")+'<button class="btn tiny secondary" data-radar-go="'+esc(s.targetView)+'">فتح القسم المرتبط</button></div></div></article>';
   }
@@ -180,10 +210,10 @@
       ["تحققات معلقة",counts.verify,"shield"],
       ["بيانات تحتاج استكمالًا",counts.data,"file"]
     ];
-    return '<div class="mr-hero"><div><span class="mr-eyebrow">A&amp;S MEDICAL · MARKET INTELLIGENCE</span><h2>رادار فرص السوق</h2><p>تحليل آلي للبيانات المسجلة داخل المنصة لاكتشاف إشارات تجارية ونواقص تستحق المتابعة.</p></div><div class="mr-live"><i></i> تحليل محلي عند فتح القسم</div></div>'+
+    return '<div class="mr-hero"><div><span class="mr-eyebrow">A&amp;S MEDICAL · MARKET INTELLIGENCE</span><h2>رادار فرص السوق</h2><p>محرك يقرأ بيانات السوق الحالية ويحوّلها إلى إشارات مرتبة حسب حرارة الفرصة وجودة الدليل.</p></div><div class="mr-live"><i></i> تحليل محلي عند فتح القسم</div></div>'+
       '<div class="mr-disclaimer"><b>حدود الرصد:</b> هذه المرحلة تحلل البيانات الموجودة فقط. لا يوجد زحف إنترنت أو تحديث خلفي تلقائي. لا تُعد فجوة البيانات دليلًا على غياب المنتج أو المورد من السوق، ولا تُعد فروق الأسعار هامش ربح مؤكدًا.</div>'+
       '<div class="mr-kpis">'+stats.map(x=>'<div class="mr-kpi"><span>'+esc(x[0])+'</span><b>'+x[1]+'</b></div>').join("")+'</div>'+
-      '<div class="mr-toolbar"><div><h3>الإشارات المكتشفة</h3><p>آخر تاريخ رصد سعر متاح: '+(last||"لا توجد أرصدة أسعار")+' · '+signals.length+' إشارة إجمالًا</p></div><div class="mr-controls"><select id="mr-filter" aria-label="تصفية الإشارات"><option value="all">كل الإشارات</option><option value="opportunity">فرص استثمارية</option><option value="price">إنذارات سعرية</option><option value="gap">فجوات البيانات</option><option value="verification">مطابقة المصنع</option><option value="supplier">فرص الموردين</option><option value="quote">طلبات عروض الأسعار</option><option value="freshness">تحديث الأسعار</option><option value="manual">الفرص المسجلة</option></select><button class="btn secondary" id="mr-refresh">تحديث التحليل</button><button class="btn secondary" id="mr-export">تصدير الإشارات CSV</button></div></div>'+
+      '<div class="mr-heat-legend"><b>مقياس الحرارة:</b><span class="cool">أخضر · أولوية منخفضة</span><span class="warm">أصفر · تحتاج دراسة</span><span class="hot">أحمر · أولوية مرتفعة</span><small>الحرارة لترتيب المتابعة وليست نسبة ربح أو توصية شراء.</small></div><div class="mr-toolbar"><div><h3>الإشارات المكتشفة</h3><p>آخر تاريخ رصد سعر متاح: '+(last||"لا توجد أرصدة أسعار")+' · '+signals.length+' إشارة إجمالًا</p></div><div class="mr-controls"><select id="mr-filter" aria-label="تصفية الإشارات"><option value="all">كل الإشارات</option><option value="opportunity">فرص استثمارية</option><option value="price">إنذارات سعرية</option><option value="gap">فجوات البيانات</option><option value="verification">مطابقة المصنع</option><option value="supplier">فرص الموردين</option><option value="quote">طلبات عروض الأسعار</option><option value="freshness">تحديث الأسعار</option><option value="manual">الفرص المسجلة</option></select><button class="btn secondary" id="mr-refresh">تحديث التحليل</button><button class="btn secondary" id="mr-export">تصدير الإشارات CSV</button></div></div>'+
       (filtered.length?'<div class="mr-list">'+filtered.map(card).join("")+'</div>':'<div class="panel empty">لا توجد إشارات من هذا النوع حاليًا. أضف بيانات موثقة أو غيّر عامل التصفية.</div>')+
       '<div class="mr-method"><h3>كيف يصدر الرادار الإشارات؟</h3><div class="mr-method-grid"><div><b>1 · الربط</b><span>يربط المنتج بالسعر والمصدر والمصنع والمورد وعروض الأسعار والتكلفة الواصلة.</span></div><div><b>2 · التحقق</b><span>يفصل بين المعلومة المنشورة والعلاقة المؤكدة والبيانات التي تحتاج مراجعة.</span></div><div><b>3 · التقييم</b><span>يحسب الفروق القابلة للمقارنة ويعرض قوة الدليل والخطوة التالية.</span></div></div></div>';
   }
