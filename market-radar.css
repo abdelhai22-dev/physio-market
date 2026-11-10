@@ -103,3 +103,30 @@
 .mr-scan-note{margin-top:12px;padding:10px 12px;border-radius:8px;background:#fff8e7;border:1px solid #ead8a9;color:#65512b;font-size:10px;line-height:1.9}
 @media(max-width:900px){.mr-scan-list{grid-template-columns:1fr}}
 @media(max-width:760px){.mr-hero-actions{width:100%;align-items:stretch;min-width:0}.mr-scan-button{padding:12px}.mr-scan-panel{padding:12px}.mr-scan-panel-head{flex-direction:column}.mr-scan-row{align-items:flex-start;flex-direction:column}.mr-scan-links{justify-content:flex-start}}
+
+/* Live online discovery results */
+.mr-online-config{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:10px;align-items:end;margin:14px 0}
+.mr-online-config label{display:block;min-width:0}
+.mr-online-config label span{display:block;margin-bottom:5px;color:#24445d;font-size:10px;font-weight:800}
+.mr-online-config input{width:100%;min-width:0;padding:10px 11px;border:1px solid #cbd8e2;border-radius:8px;background:#fff;color:#18334b;font:12px "Cairo",sans-serif}
+.mr-online-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0}
+.mr-online-controls .mr-scan-button{width:auto;min-width:220px}
+.mr-online-controls .mr-scan-button:disabled{opacity:.65;cursor:wait}
+.mr-online-state,.mr-online-last{color:#34566f;font-size:11px;font-weight:700}
+.mr-online-results{margin-top:18px}
+.mr-online-results h3{color:#18364f;font-size:14px}
+.mr-online-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mr-online-card{min-width:0;padding:13px;border:1px solid #d6e1e9;border-radius:10px;background:#fff;box-shadow:0 4px 14px #10243b0b}
+.mr-online-card-top,.mr-online-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;color:#50677a;font-size:9px}
+.mr-online-card h4{margin:8px 0 5px;color:#17344c;font-size:13px;overflow-wrap:anywhere}
+.mr-online-card p{margin:0 0 9px;color:#40586d;font-size:10px;line-height:1.8;overflow-wrap:anywhere}
+.mr-online-price{padding:9px 10px;border-radius:8px;background:#f1f7f4;color:#175a3b}
+.mr-online-price b,.mr-online-price small{display:block}
+.mr-online-price b{font-size:14px}
+.mr-online-price small,.mr-online-no-price{font-size:9px;color:#526a7b}
+.mr-online-no-price{padding:8px;border:1px dashed #cbd7df;border-radius:8px}
+.mr-online-promo{display:inline-block;margin-top:7px;padding:4px 7px;border-radius:5px;background:#fff5df;color:#795a19;font-size:9px;font-weight:800}
+.mr-online-meta{margin:9px 0}
+.mr-online-card>a{display:inline-block;color:#086b9c;font-size:10px;font-weight:800;text-decoration:underline}
+.mr-online-query{display:block;margin-top:7px;color:#718394;font-size:8px;overflow-wrap:anywhere}
+@media(max-width:850px){.mr-online-config{grid-template-columns:1fr}.mr-online-config .btn{width:100%}.mr-online-grid{grid-template-columns:1fr}}
