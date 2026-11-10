@@ -278,7 +278,15 @@
 
 
   function priceIntelligencePage() {
-    const rows=(D.priceSnapshots||[]).filter(x=>x.currency==="EGP"&&x.observedAt>="2026-09-14"&&x.observedAt<="2026-11-09");
+    const legacyRows=(D.prices||[]).map(p=>{const product=(D.devices||[]).concat(D.consumables||[]).find(x=>x.code===p.productCode)||{};const seller=(D.companies||[]).concat(D.suppliers||[]).find(x=>x.code===p.companyCode)||{};const source=(D.sources||[]).find(x=>x.code===p.sourceCode)||{};return {...p,productName:p.productName||product.name||p.product||"موديل غير محدد",model:p.model||product.model||"",seller:p.seller||seller.name||"مصدر غير محدد",sourceUrl:p.sourceUrl||source.url||"",status:p.status||"needs_review"};});
+    const allRows=[...(D.priceSnapshots||[]),...legacyRows];
+    const seenPrices=new Set();
+    const uniqueRows=allRows.filter(x=>{const key=[x.productCode,x.seller,x.amount,x.currency,x.observedAt,x.sourceCode||x.sourceUrl].join("|");if(seenPrices.has(key))return false;seenPrices.add(key);return true;});
+    const rangeDays=Number($("#pi-range-filter")?.value||90);
+    const end=new Date();end.setHours(23,59,59,999);
+    const start=new Date(end);start.setDate(start.getDate()-rangeDays+1);start.setHours(0,0,0,0);
+    const isoDay=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
+    const rows=uniqueRows.filter(x=>x.currency==="EGP"&&x.observedAt&&x.observedAt>=isoDay(start)&&x.observedAt<=isoDay(end)&&Number.isFinite(Number(x.amount))&&Number(x.amount)>0);
     const products=[...new Map(rows.map(x=>[x.productCode,{code:x.productCode,name:x.productName,model:x.model}])).values()];
     const selected=$("#pi-product-filter")?.value||"ALL";
     const filtered=selected==="ALL"?rows:rows.filter(x=>x.productCode===selected);
@@ -288,8 +296,7 @@
     const spread=min?((max-min)/min)*100:0;
     const sellers=new Set(filtered.map(x=>x.seller)).size;
     const uniqueProducts=new Set(filtered.map(x=>x.productCode)).size;
-    const start=new Date("2026-09-14T00:00:00"),end=new Date("2026-11-09T00:00:00");
-    const weeks=Array.from({length:8},(_,i)=>{const d=new Date(end);d.setDate(d.getDate()-(7-i)*7);return {date:d.toISOString().slice(0,10),label:d.toLocaleDateString("ar-EG",{day:"2-digit",month:"short"})};});
+    const weeks=Array.from({length:8},(_,i)=>{const d=new Date(end);d.setDate(d.getDate()-(7-i)*7);return {date:isoDay(d),label:d.toLocaleDateString("ar-EG",{day:"2-digit",month:"short"})};});
     const weekly=weeks.map(w=>{const rs=filtered.filter(x=>{const dt=new Date(x.observedAt+"T00:00:00");const hi=new Date(w.date+"T00:00:00");const lo=new Date(hi);lo.setDate(lo.getDate()-7);return dt>lo&&dt<=hi;});return {...w,count:rs.length,avg:rs.length?rs.reduce((a,x)=>a+Number(x.amount),0)/rs.length:null};});
     const chartW=760,chartH=280,left=64,right=20,top=20,bottom=44,plotW=chartW-left-right,plotH=chartH-top-bottom;
     const chartProducts=selected==="ALL"?products:products.filter(p=>p.code===selected);
@@ -308,9 +315,9 @@
     const byProduct=products.map(p=>{const a=rows.filter(x=>x.productCode===p.code).map(x=>Number(x.amount));return {name:p.name,code:p.code,count:a.length,min:Math.min(...a),max:Math.max(...a),avg:a.reduce((n,v)=>n+v,0)/a.length,sellers:new Set(rows.filter(x=>x.productCode===p.code).map(x=>x.seller)).size};});
     const table=byProduct.map(p=>'<tr><td><b>'+escI(p.name)+'</b><small class="subtle">'+escI(p.code)+'</small></td><td>'+p.count+'</td><td>'+p.sellers+'</td><td>'+Math.round(p.min).toLocaleString("en-US")+' ج.م</td><td>'+Math.round(p.max).toLocaleString("en-US")+' ج.م</td><td>'+Math.round(p.avg).toLocaleString("en-US")+' ج.م</td></tr>').join("");
     const priceRows=[...filtered].sort((a,b)=>a.productName.localeCompare(b.productName)||a.amount-b.amount).map(p=>'<tr><td>'+escI(p.productName)+'<small class="subtle">'+escI(p.model)+'</small></td><td>'+escI(p.seller)+'</td><td><b>'+Number(p.amount).toLocaleString("en-US")+' ج.م</b></td><td>'+escI(p.observedAt)+'</td><td><a href="'+escI(p.sourceUrl)+'" target="_blank" rel="noopener">المصدر ↗</a></td><td>'+escI(p.status==="verified"?"متحقق":"يحتاج مراجعة")+'</td></tr>').join("");
-    return '<div class="section-head"><div><h2>تحليل أسعار السوق · آخر 8 أسابيع</h2><p>الفترة: 14 سبتمبر – 9 نوفمبر 2026 · أسعار تجزئة منشورة بالجنيه المصري</p></div><div class="section-actions"><button class="btn secondary" id="pi-add-price">+ إضافة رصد سعر</button><button class="btn secondary" id="pi-export-csv">تصدير بيانات المقارنة CSV</button></div></div>'+
+    return '<div class="section-head"><div><h2>مركز ذكاء أسعار السوق</h2><p>نافذة متحركة لآخر '+rangeDays+' يومًا حتى '+isoDay(end)+' · الأسعار بالجنيه المصري فقط</p></div><div class="section-actions"><button class="btn secondary" id="pi-add-price">+ إضافة رصد سعر</button><button class="btn secondary" id="pi-export-csv">تصدير بيانات المقارنة CSV</button></div></div>'+
       '<div class="mi-warning"><b>تنبيه تاريخي:</b> قاعدة الأسعار تحتوي حاليًا على رصد منشور في أسبوع واحد فقط. الأسابيع السبعة السابقة بلا سجلات موثقة؛ لذلك لا نحسب تغيرًا زمنيًا ولا نرسم نقاطًا تقديرية أو نعتبر السعر الحالي تاريخيًا.</div>'+
-      '<div class="pi-filter panel"><label>الموديل محل التحليل <select id="pi-product-filter">'+productOptions+'</select></label><span class="subtle">التجميع أسبوعي، ولا تظهر نقطة إلا عند وجود رصد فعلي.</span></div>'+
+      '<div class="pi-filter panel"><label>الموديل محل التحليل <select id="pi-product-filter">'+productOptions+'</select></label><label>فترة التحليل <select id="pi-range-filter"><option value="30" '+(rangeDays===30?'selected':'')+'>آخر 30 يومًا</option><option value="60" '+(rangeDays===60?'selected':'')+'>آخر 60 يومًا</option><option value="90" '+(rangeDays===90?'selected':'')+'>آخر 90 يومًا</option></select></label><span class="subtle">التجميع أسبوعي، ولا تظهر نقطة إلا عند وجود رصد فعلي.</span></div>'+
       '<div class="stats-grid pi-kpis">'+[['عدد أرصدة الأسعار',values.length],['موديلات مقارنة',uniqueProducts],['مصادر / بائعون',sellers],['أقل سعر',min?Math.round(min).toLocaleString("en-US")+" ج.م":"—"],['أعلى سعر',max?Math.round(max).toLocaleString("en-US")+" ج.م":"—"],['متوسط جميع الرصود',avg?Math.round(avg).toLocaleString("en-US")+" ج.م":"—"],['فارق السعر من الأقل للأعلى',values.length>1?spread.toFixed(1)+"%":"—"],['التغير الأسبوعي',weekly.filter(w=>w.count).length>=2?(((weekly.filter(w=>w.count).slice(-1)[0].avg/weekly.filter(w=>w.count).slice(-2)[0].avg)-1)*100).toFixed(1)+"%":"غير متاح"],['تغطية الفترة',weekly.filter(w=>w.count).length+"/8 أسابيع"]].map(x=>'<div class="stat-card"><div class="stat-label">'+x[0]+'</div><div class="stat-value">'+x[1]+'</div><div class="stat-foot">حسب السجلات المتاحة</div></div>').join("")+'</div>'+
       '<div class="panel pi-chart"><div class="panel-head"><h3>اتجاه متوسط السعر الأسبوعي</h3><span class="subtle">لا يوجد خط اتجاه قبل توافر رصد في أسبوعين مختلفين على الأقل</span></div>'+chart+'<div class="pi-week-coverage">'+weekly.map(w=>'<span class="'+(w.count?'has-data':'')+'">'+w.label+'<b>'+(w.count? w.count+" رصد":"لا توجد بيانات")+'</b></span>').join("")+'</div></div>'+
       '<div class="panel"><div class="panel-head"><h3>مقارنة الموديلات</h3><span class="subtle">الأسعار المنشورة فقط · EGP</span></div><div class="table-wrap"><table><thead><tr><th>الموديل</th><th>عدد الأسعار</th><th>البائعون</th><th>الأقل</th><th>الأعلى</th><th>المتوسط</th></tr></thead><tbody>'+(table||'<tr><td colspan="6" class="empty">لا توجد بيانات.</td></tr>')+'</tbody></table></div></div>'+
@@ -345,7 +352,7 @@
   };
 
   content.addEventListener("change", e => {
-    if (e.target.id === "pi-product-filter") render();
+    if (e.target.id === "pi-product-filter" || e.target.id === "pi-range-filter") render();
   });
   content.addEventListener("click", e => {
     if (e.target.closest("#qc-add")) go("quotes");
@@ -377,7 +384,7 @@
     }
     if (e.target.closest("#pi-add-price")) openForm("prices");
     if (e.target.closest("#pi-export-csv")) {
-      const rows=D.priceSnapshots||[];
+      const rows=[...(D.priceSnapshots||[]),...(D.prices||[]).map(p=>{const product=(D.devices||[]).concat(D.consumables||[]).find(x=>x.code===p.productCode)||{};const seller=(D.companies||[]).concat(D.suppliers||[]).find(x=>x.code===p.companyCode)||{};const source=(D.sources||[]).find(x=>x.code===p.sourceCode)||{};return {...p,productName:p.productName||product.name||p.product||"",seller:p.seller||seller.name||"",sourceUrl:p.sourceUrl||source.url||""};})];
       const keys=["productName","model","seller","amount","currency","observedAt","sourceUrl","status"];
       const csv=[keys.join(","),...rows.map(r=>keys.map(k=>'"'+String(r[k]??"").replace(/"/g,'""')+'"').join(","))].join("\\r\\n");
       const blob=new Blob(["\\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
@@ -419,5 +426,5 @@
   });
 
   // Refresh navigation and dashboard after the extension is initialized.
-  if (currentView === "dashboard") render();
+  if (currentView === "dashboard") { currentView = "priceIntelligence"; render(); }
 })();
