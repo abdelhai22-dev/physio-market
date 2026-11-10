@@ -167,7 +167,7 @@
     const src=(s.sources||[]).filter(u=>/^https?:\/\//i.test(String(u))).map((u,i)=>'<a href="'+esc(u)+'" target="_blank" rel="noopener">مصدر '+(i+1)+' ↗</a>').join(" · ");
     return '<article class="mr-signal '+tone+'"><div class="mr-signal-top"><span class="mr-tag">'+esc(s.label)+'</span><span class="mr-confidence">قوة الدليل: '+esc(s.confidence)+'</span></div><h3>'+esc(s.title)+'</h3><p>'+esc(s.summary)+'</p>'+
       (s.evidence&&s.evidence.length?'<ul>'+s.evidence.map(e=>'<li>'+esc(e)+'</li>').join("")+'</ul>':"")+
-      '<div class="mr-action"><b>الخطوة التالية:</b> '+esc(s.action)+'</div><div class="mr-card-foot">'+(src?'<span>'+src+'</span>':"<span>لا يوجد رابط مصدر مباشر في الإشارة</span>")+'<button class="btn tiny secondary" data-radar-go="'+esc(s.targetView)+'">فتح القسم المرتبط</button></div></article>';
+      '<div class="mr-action"><b>الخطوة التالية:</b> '+esc(s.action)+'</div><div class="mr-card-foot">'+(src?'<span>'+src+'</span>':"<span>لا يوجد رابط مصدر مباشر في الإشارة</span>")+'<div class="mr-case-action">'+(productMap.has(s.targetCode)?'<button class="btn tiny" data-mr-case="'+esc(s.targetCode)+'">'+(arr("marketRadarCases").some(c=>c.productCode===s.targetCode)?"فتح بطاقة المتابعة":"إنشاء بطاقة فرصة")+'</button>':"")+'<button class="btn tiny secondary" data-radar-go="'+esc(s.targetView)+'">فتح القسم المرتبط</button></div></div></article>';
   }
   function radarPage(){
     const selected=$("#mr-filter")?.value||"all";
