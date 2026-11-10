@@ -1,0 +1,40 @@
+/* PHYSIO MARKET — Market Radar responsive layer */
+.mr-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding:24px 26px;border-radius:16px;background:linear-gradient(115deg,#10243b,#1b3b57 68%,#304d64);color:#fff;box-shadow:0 12px 32px #10243b1c}
+.mr-eyebrow{font-size:10px;letter-spacing:1.4px;color:#e6c98b;font-weight:800}
+.mr-hero h2{font-size:26px;margin:8px 0 5px;color:#fff}
+.mr-hero p{margin:0;color:#d9e2eb;font-size:12px;line-height:1.9}
+.mr-live{display:flex;align-items:center;gap:8px;white-space:nowrap;color:#e6edf4;font-size:11px}
+.mr-live i{width:8px;height:8px;border-radius:50%;background:#80d5b0;box-shadow:0 0 0 4px #80d5b022}
+.mr-disclaimer{padding:12px 15px;margin:13px 0;background:#fff8e9;border:1px solid #ead7ad;border-radius:10px;color:#66532e;font-size:11px;line-height:1.9}
+.mr-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:14px 0}
+.mr-kpi{padding:15px 16px;border:1px solid #e4eaf0;border-radius:11px;background:#fff;min-width:0}
+.mr-kpi span{display:block;color:#728094;font-size:10px;line-height:1.7}
+.mr-kpi b{display:block;color:#1d3852;font-size:25px;margin-top:5px;font-weight:800}
+.mr-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:22px 0 12px}
+.mr-toolbar h3{font-size:16px;margin:0 0 4px;color:#1d3852}
+.mr-toolbar p{font-size:10px;color:#8190a0;margin:0}
+.mr-controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.mr-controls select{border:1px solid #dce4eb;border-radius:8px;background:#fff;padding:8px 10px;color:#20364c;font:11px "Cairo",sans-serif}
+.mr-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.mr-signal{background:#fff;border:1px solid #e3e9ef;border-radius:12px;padding:16px;min-width:0;box-shadow:0 5px 18px #10243b08}
+.mr-signal.is-high{border-inline-start:3px solid #c47b48}
+.mr-signal.is-follow{border-inline-start:3px solid #6485a0}
+.mr-signal-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+.mr-tag{display:inline-flex;padding:4px 8px;border-radius:6px;background:#eef3f7;color:#36536d;font-size:10px;font-weight:800}
+.mr-confidence{font-size:10px;color:#8793a0}
+.mr-signal h3{font-size:14px;color:#1d3852;margin:0 0 7px;line-height:1.7}
+.mr-signal p{font-size:11px;color:#617286;line-height:1.9;margin:0 0 8px}
+.mr-signal ul{margin:8px 0;padding-inline-start:18px;color:#778697;font-size:10px;line-height:1.9}
+.mr-action{padding:9px 10px;background:#f5f7f9;border-radius:8px;color:#586b7e;font-size:10px;line-height:1.8}
+.mr-card-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px;color:#8a96a3;font-size:9px}
+.mr-card-foot a{color:#315e80;text-decoration:none}
+.mr-card-foot .btn{white-space:nowrap}
+.mr-method{margin-top:18px;padding:18px;border:1px solid #e5eaf0;border-radius:12px;background:#fff}
+.mr-method h3{margin:0 0 12px;color:#1d3852;font-size:14px}
+.mr-method-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.mr-method-grid div{padding:12px;background:#f5f7f9;border-radius:9px}
+.mr-method-grid b,.mr-method-grid span{display:block}
+.mr-method-grid b{color:#36536d;font-size:11px;margin-bottom:5px}
+.mr-method-grid span{color:#718094;font-size:10px;line-height:1.8}
+@media(max-width:900px){.mr-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.mr-list{grid-template-columns:1fr}}
+@media(max-width:760px){.mr-hero{align-items:flex-start;flex-direction:column;padding:19px 17px}.mr-hero h2{font-size:22px}.mr-live{white-space:normal}.mr-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.mr-kpi{padding:12px}.mr-kpi b{font-size:22px}.mr-toolbar{align-items:stretch;flex-direction:column}.mr-controls{display:grid;grid-template-columns:1fr 1fr}.mr-controls select{grid-column:1/-1;width:100%}.mr-controls .btn{width:100%;white-space:normal}.mr-signal{padding:14px}.mr-card-foot{align-items:flex-start;flex-direction:column}.mr-method-grid{grid-template-columns:1fr}}

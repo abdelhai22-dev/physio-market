@@ -62,7 +62,7 @@
   Object.assign(titles, {quoteComparison:"مقارنة عروض الموردين"});
   const sourcingNav = $("#main-nav");
   if (sourcingNav && !sourcingNav.querySelector('[data-view="quoteComparison"]')) {
-    const anchor = nav.querySelector('[data-view="quotes"]');
+    const anchor = sourcingNav.querySelector('[data-view="quotes"]');
     const b = document.createElement("button");
     b.className = "nav-link";
     b.dataset.view = "quoteComparison";
