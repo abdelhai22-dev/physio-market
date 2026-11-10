@@ -292,7 +292,7 @@
     const goButton=e.target.closest("[data-radar-go]");
     if(goButton){go(goButton.dataset.radarGo);return;}
     const scanButton=e.target.closest("#mr-online-scan");
-    if(scanButton){const panel=$("#mr-online-scan-panel");if(panel){panel.scrollIntoView({behavior:"smooth",block:"start"});scanButton.classList.add("is-active");}return;}
+    if(scanButton){const panel=$("#mr-online-scan-panel");if(panel){panel.scrollIntoView({behavior:"smooth",block:"start"});scanButton.classList.add("is-active");}const cfg=scanConfig();if(cfg.endpoint&&cfg.token)runOnlineScan();else{onlineStatus="error";onlineProgress="اضبط رابط محرك الرصد ورمز الوصول مرة واحدة، ثم اضغط الزر الأخضر لبدء المسح مباشرة.";render();}return;}
     if(e.target.closest("#mr-save-config")){
       const endpoint=$("#mr-worker-url")?.value.trim()||"",token=$("#mr-worker-token")?.value.trim()||"";
       if(!/^https:\/\//i.test(endpoint)||!token){alert("أدخل رابط HTTPS ورمز الوصول.");return;}
