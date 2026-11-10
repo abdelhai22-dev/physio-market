@@ -63,9 +63,9 @@
 .mr-heat-panel{margin:10px 0 13px;padding:12px 13px;border:1px solid #e1e7ed;border-radius:10px;background:linear-gradient(135deg,#fbfcfd,#f4f7f9)}
 .mr-heat-head{display:flex;justify-content:space-between;align-items:center;gap:10px;color:#20384f;font-size:11px;font-weight:800}
 .mr-heat-head b{font-size:12px;color:#14283e;font-variant-numeric:tabular-nums}
-.mr-heat-track{height:12px;position:relative;margin:12px 3px 5px;border-radius:99px;background:linear-gradient(90deg,#24965c 0%,#83b94c 28%,#f1cf35 55%,#f39a32 76%,#d83c35 100%);box-shadow:inset 0 1px 3px #10243b24}
+.mr-heat-track{direction:ltr;height:12px;position:relative;margin:12px 3px 5px;border-radius:99px;background:linear-gradient(90deg,#24965c 0%,#83b94c 28%,#f1cf35 55%,#f39a32 76%,#d83c35 100%);box-shadow:inset 0 1px 3px #10243b24}
 .mr-heat-track i{position:absolute;top:50%;left:var(--heat);width:19px;height:19px;border:3px solid #fff;border-radius:50%;background:#14283e;box-shadow:0 1px 5px #10243b66;transform:translate(-50%,-50%)}
-.mr-heat-scale{display:flex;justify-content:space-between;color:#43566a;font-size:9px;font-weight:700}
+.mr-heat-scale{direction:ltr;display:flex;justify-content:space-between;color:#43566a;font-size:9px;font-weight:700}
 .mr-heat-legend{display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin:12px 0;padding:11px 14px;border:1px solid #dfe6ec;border-radius:10px;background:#fff;color:#20384f;font-size:11px}
 .mr-heat-legend span{font-weight:800}
 .mr-heat-legend .cool{color:#187847}.mr-heat-legend .warm{color:#9a7200}.mr-heat-legend .hot{color:#b52f2b}
