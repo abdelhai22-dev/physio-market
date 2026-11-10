@@ -77,3 +77,29 @@
 .mr-quality-dot.good{background:#16834c}.mr-quality-dot.mid{background:#d6a500}.mr-quality-dot.weak{background:#cf443c}
 .mr-heat-hot{border-top:3px solid #d83c35}.mr-heat-warm{border-top:3px solid #e2b629}.mr-heat-cool{border-top:3px solid #24965c}
 @media(max-width:760px){.mr-heat-head{align-items:flex-start;flex-direction:column}.mr-heat-legend{align-items:flex-start;flex-direction:column;gap:6px}.mr-heat-panel{padding:10px}.mr-signal h3{font-size:14px}}
+
+
+/* Online market scan launcher and product-by-product search handoff */
+.mr-hero{align-items:center}
+.mr-hero-actions{display:flex;flex-direction:column;align-items:flex-end;gap:12px;min-width:245px}
+.mr-scan-button{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;width:100%;padding:13px 18px;border:1px solid #0c8b50;border-radius:11px;background:linear-gradient(135deg,#159957,#087642);color:#fff;font:800 13px "Cairo",sans-serif;cursor:pointer;box-shadow:0 7px 20px #08764238;transition:transform .15s,box-shadow .15s,filter .15s}
+.mr-scan-button:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow:0 10px 24px #08764248}
+.mr-scan-button>span{font-size:23px;line-height:1}
+.mr-scan-button small{width:100%;font:700 8px Arial,sans-serif;letter-spacing:1.6px;color:#d8f5e5}
+.mr-scan-button.is-active{background:linear-gradient(135deg,#086b3d,#075a35)}
+.mr-scan-panel{margin:14px 0;padding:17px;border:1px solid #9dd8b7;border-radius:13px;background:linear-gradient(145deg,#f4fff8,#fff);box-shadow:0 8px 24px #08764212}
+.mr-scan-panel[hidden]{display:none}
+.mr-scan-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}
+.mr-scan-panel-head b{display:block;color:#145c38;font-size:15px}
+.mr-scan-panel-head p{margin:4px 0 0;color:#315a46;font-size:11px;line-height:1.9}
+.mr-scan-count{white-space:nowrap;padding:5px 10px;border-radius:20px;background:#dff5e8;color:#12633b;font-size:10px;font-weight:800}
+.mr-scan-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.mr-scan-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border:1px solid #dceee3;border-radius:9px;background:#fff;min-width:0}
+.mr-scan-row>div:first-child{min-width:0}
+.mr-scan-row b{display:block;color:#183d2b;font-size:11px;overflow-wrap:anywhere}
+.mr-scan-row small{display:block;color:#567564;font-size:9px;margin-top:3px}
+.mr-scan-links{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.mr-scan-links a{color:#087642;font-size:10px;font-weight:800;text-decoration:underline;white-space:nowrap}
+.mr-scan-note{margin-top:12px;padding:10px 12px;border-radius:8px;background:#fff8e7;border:1px solid #ead8a9;color:#65512b;font-size:10px;line-height:1.9}
+@media(max-width:900px){.mr-scan-list{grid-template-columns:1fr}}
+@media(max-width:760px){.mr-hero-actions{width:100%;align-items:stretch;min-width:0}.mr-scan-button{padding:12px}.mr-scan-panel{padding:12px}.mr-scan-panel-head{flex-direction:column}.mr-scan-row{align-items:flex-start;flex-direction:column}.mr-scan-links{justify-content:flex-start}}
