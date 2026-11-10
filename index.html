@@ -117,7 +117,15 @@
   <script src="app.js"></script>
   <script src="intelligence.js"></script>
   <script src="market-radar.js"></script>
-  <script>/* Daily workspace opens directly on the Market Radar. */ if (typeof go === "function") go("marketRadar");</script>
   <script src="market-workflow.js"></script>
+  <script>
+    // Run after every application module has loaded; also restore the default view on page return.
+    window.addEventListener("load", function () {
+      if (typeof go === "function") go("marketRadar");
+    }, { once: true });
+    window.addEventListener("pageshow", function () {
+      if (document.readyState === "complete" && typeof go === "function") go("marketRadar");
+    });
+  </script>
 </body>
 </html>
