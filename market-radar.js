@@ -172,7 +172,7 @@
       return {score:fallback,label:fallback>=70?"جيدة":fallback>=45?"متوسطة":"ضعيفة"};
     }
     const verified=rows.filter(x=>["verified","confirmed","approved"].includes(String(x.status||"").toLowerCase())).length;
-    const linked=rows.filter(x=>/^https?:\\/\\//i.test(String(x.sourceUrl||""))).length;
+    const linked=rows.filter(x=>/^https?:\/\//i.test(String(x.sourceUrl||""))).length;
     const recent=rows.filter(x=>{const d=dayDiff(x.observedAt);return d!==null&&d<=30;}).length;
     const score=Math.round((verified/rows.length)*65+(linked/rows.length)*15+(recent/rows.length)*20);
     return {score,label:score>=70?"جيدة":score>=45?"متوسطة":"ضعيفة"};
@@ -191,7 +191,7 @@
     const heat=heatScore(s), quality=qualityOf(s);
     const heatTone=heat>=70?"hot":heat>=40?"warm":"cool";
     const qualityTone=quality.score>=70?"good":quality.score>=45?"mid":"weak";
-    const src=(s.sources||[]).filter(u=>/^https?:\\/\\//i.test(String(u))).map((u,i)=>'<a href="'+esc(u)+'" target="_blank" rel="noopener">مصدر '+(i+1)+' ↗</a>').join(" · ");
+    const src=(s.sources||[]).filter(u=>/^https?:\/\//i.test(String(u))).map((u,i)=>'<a href="'+esc(u)+'" target="_blank" rel="noopener">مصدر '+(i+1)+' ↗</a>').join(" · ");
     return '<article class="mr-signal '+tone+' mr-heat-'+heatTone+'"><div class="mr-signal-top"><span class="mr-tag">'+esc(s.label)+'</span><span class="mr-confidence">قوة الدليل: '+esc(s.confidence)+'</span></div>'+
       '<div class="mr-heat-panel"><div class="mr-heat-head"><span>مؤشر حرارة الفرصة</span><b>'+heat+' / 100 · '+heatLabel(heat)+'</b></div><div class="mr-heat-track" style="--heat:'+heat+'%" role="img" aria-label="حرارة الفرصة '+heat+' من 100"><i></i></div><div class="mr-heat-scale"><span>منخفضة</span><span>متوسطة</span><span>مرتفعة</span></div></div>'+
       '<h3>'+esc(s.title)+'</h3><p>'+esc(s.summary)+'</p>'+
