@@ -1,0 +1,7 @@
+name = "physio-market-radar"
+main = "src/index.js"
+compatibility_date = "2026-11-10"
+workers_dev = true
+
+[vars]
+ALLOWED_ORIGIN = "https://abdelhai22-dev.github.io"
