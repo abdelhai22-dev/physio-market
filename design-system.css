@@ -71,3 +71,29 @@ footer{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:17px 0 5px
   .stat-value{font-size:21px}
   .section-actions{grid-template-columns:1fr}
 }
+
+
+/* Price-first navigation and right-side mobile drawer */
+.topbar-heading{display:flex;align-items:center;gap:12px;min-width:0}
+.mobile-menu-toggle{display:none}
+.mobile-nav-backdrop{display:none}
+@media(max-width:760px){
+  .app-shell{display:block}
+  .sidebar{position:fixed!important;inset:0 0 0 auto!important;width:min(86vw,330px);height:100dvh!important;max-height:100dvh!important;overflow-y:auto!important;z-index:60!important;padding:18px 14px calc(24px + env(safe-area-inset-bottom))!important;border-radius:0 0 0 0;box-shadow:-18px 0 48px #07182745!important;transform:translateX(110%);transition:transform .24s ease;visibility:hidden;pointer-events:none}
+  .sidebar.mobile-nav-open{transform:translateX(0);visibility:visible;pointer-events:auto}
+  .sidebar .brand{padding:2px 4px 14px!important}
+  .sidebar .workspace{display:block!important;margin:14px 4px}
+  .sidebar nav{display:grid!important;grid-template-columns:1fr!important;gap:3px!important;margin-top:10px;padding:0!important;background:transparent!important;border:0!important;max-height:none!important;overflow:visible!important}
+  .sidebar nav .nav-caption{grid-column:auto;margin:15px 8px 4px!important}
+  .sidebar nav .nav-link{min-height:45px;padding:10px 12px!important;font-size:12px!important}
+  .sidebar-foot{display:flex!important;margin-top:18px}
+  .mobile-menu-toggle{display:inline-flex;align-items:center;justify-content:center;gap:8px;flex:0 0 43px;width:43px;height:43px;border:1px solid #dce4eb;border-radius:11px;background:#fff;color:#18334e;font:800 18px "Cairo",sans-serif;box-shadow:0 4px 14px #10243b12}
+  .mobile-menu-toggle span{color:#a1844c}
+  .mobile-nav-backdrop:not([hidden]){display:block;position:fixed;inset:0;background:#0718278c;backdrop-filter:blur(2px);z-index:55}
+  .topbar{position:sticky;top:0;align-items:center;flex-direction:row;padding:12px 0 10px}
+  .topbar-heading{gap:10px}
+  .topbar h1{font-size:19px}
+  .main{padding:0 12px 16px}
+  body.mobile-nav-visible{overflow:hidden}
+}
+@media(prefers-reduced-motion:reduce){.sidebar{transition:none}}
