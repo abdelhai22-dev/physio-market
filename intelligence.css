@@ -25,3 +25,13 @@
 @media(max-width:760px){.pi-filter{align-items:flex-start;flex-direction:column}.pi-week-coverage{grid-template-columns:repeat(4,minmax(0,1fr))}.pi-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 .pi-legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:10px}
+
+
+/* Readability pass: improve contrast on desktop without changing the layout */
+.subtle,.stat-label,.stat-foot,.section-head p,.activity-row,.activity-row small,.mi-actor,
+.pi-week-coverage span{color:#465a70}
+.pi-filter label{color:#203b55}
+.pi-week-coverage span.has-data{color:#174e75;font-weight:800}
+.pi-kpis .stat-label{color:#40556b}
+.pi-chart .subtle{color:#40556b}
+@media(max-width:760px){.subtle,.stat-label,.stat-foot,.section-head p,.activity-row,.activity-row small,.pi-week-coverage span{color:#465a70}}
