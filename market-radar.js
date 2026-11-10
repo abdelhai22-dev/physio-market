@@ -164,10 +164,10 @@
   };
   function card(s){
     const tone=s.severity==="مرتفع"?"is-high":s.severity==="متابعة"?"is-follow":"";
-    const src=(s.sources||[]).map((u,i)=>'<a href="'+esc(u)+'" target="_blank" rel="noopener">مصدر '+(i+1)+' ↗</a>').join(" · ");
+    const src=(s.sources||[]).filter(u=>/^https?:\/\//i.test(String(u))).map((u,i)=>'<a href="'+esc(u)+'" target="_blank" rel="noopener">مصدر '+(i+1)+' ↗</a>').join(" · ");
     return '<article class="mr-signal '+tone+'"><div class="mr-signal-top"><span class="mr-tag">'+esc(s.label)+'</span><span class="mr-confidence">قوة الدليل: '+esc(s.confidence)+'</span></div><h3>'+esc(s.title)+'</h3><p>'+esc(s.summary)+'</p>'+
       (s.evidence&&s.evidence.length?'<ul>'+s.evidence.map(e=>'<li>'+esc(e)+'</li>').join("")+'</ul>':"")+
-      '<div class="mr-action"><b>الخطوة التالية:</b> '+esc(s.action)+'</div><div class="mr-card-foot">'+(src?'<span>'+src+'</span>':"<span>لا يوجد رابط مصدر مباشر في الإشارة</span>")+'<button class="btn tiny secondary" data-radar-go="'+esc(s.targetView)+'">فتح السجل المرتبط</button></div></article>';
+      '<div class="mr-action"><b>الخطوة التالية:</b> '+esc(s.action)+'</div><div class="mr-card-foot">'+(src?'<span>'+src+'</span>':"<span>لا يوجد رابط مصدر مباشر في الإشارة</span>")+'<button class="btn tiny secondary" data-radar-go="'+esc(s.targetView)+'">فتح القسم المرتبط</button></div></article>';
   }
   function radarPage(){
     const selected=$("#mr-filter")?.value||"all";
