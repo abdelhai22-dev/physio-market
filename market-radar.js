@@ -205,31 +205,20 @@
   let onlineStatus="idle";
   let onlineProgress="";
   let onlineLastScan="";
-  const scanConfig=()=>{
-    try{return JSON.parse(localStorage.getItem("physio-market-radar-config-v1")||"{}");}
-    catch(_){return {};}
-  };
-  const saveScanConfig=cfg=>{
-    try{localStorage.setItem("physio-market-radar-config-v1",JSON.stringify(cfg));return true;}
-    catch(_){return false;}
-  };
+  const WORKER_ENDPOINT="https://physio-market-radar.abdelhai22.workers.dev";
   const onlineSection=()=>{
-    const cfg=scanConfig();
     const cards=onlineResults.map(r=>{
       const price=r.priceText?'<div class="mr-online-price"><b>'+esc(r.priceText)+'</b><small>مؤشر سعر من مقتطف البحث — غير مؤكد حتى فتح المصدر</small></div>':'<div class="mr-online-no-price">لم يظهر سعر قابل للاستخراج بوضوح في مقتطف البحث</div>';
       const promo=r.promotionHint?'<span class="mr-online-promo">عبارات ترويجية بالمقتطف · تحتاج تحقق</span>':'';
       return '<article class="mr-online-card"><div class="mr-online-card-top"><span>'+esc(r.marketLabel||"مصدر ويب")+'</span><small>'+esc(r.observedAt||"وقت الرصد غير متاح")+'</small></div><h4>'+esc(r.title||"نتيجة بحث")+'</h4><p>'+esc(r.description||"لا يوجد وصف متاح")+'</p>'+price+promo+'<div class="mr-online-meta"><span>الموديل: '+esc(r.productLabel||"غير محدد")+'</span><span>الانتهاء: '+esc(r.expiryText||"غير معلن في المصدر")+'</span></div><a href="'+esc(r.url)+'" target="_blank" rel="noopener noreferrer">فتح المصدر الأصلي ↗</a><small class="mr-online-query">استعلام: '+esc(r.query||"")+'</small></article>';
     }).join("");
     return '<div class="mr-scan-panel" id="mr-online-scan-panel"><div class="mr-scan-panel-head"><div><b>محرك البحث الحيّ</b><p>يرسل موديلات القاعدة إلى خدمة بحث آمنة، ويعيد روابط المصادر ومقتطفاتها داخل الرادار. مفتاح Tavily يبقى على الخادم ولا يوضع في الموقع.</p></div><span class="mr-scan-count">'+allProducts.length+' منتجًا في القاعدة</span></div>'+
-      '<div class="mr-online-config"><label><span>رابط محرك الرصد (Worker URL)</span><input id="mr-worker-url" type="url" placeholder="https://physio-market-radar.abdelhai22.workers.dev" value="'+esc(cfg.endpoint||"https://physio-market-radar.abdelhai22.workers.dev")+'"></label><label><span>رمز الوصول الخاص بالمحرك</span><input id="mr-worker-token" type="password" autocomplete="off" placeholder="أدخل رمز الوصول الذي ضبطته على الخادم" value="'+esc(cfg.token||"")+'"></label><button class="btn secondary" id="mr-save-config" type="button">حفظ الإعدادات على هذا الجهاز</button></div>'+
-      '<div class="mr-online-controls"><button class="mr-scan-button" id="mr-run-live-scan" type="button" '+(onlineStatus==="running"?"disabled":"")+'><b>'+(onlineStatus==="running"?"المسح جارٍ...":"ابدأ البحث الأونلاين الآن")+'</b></button><span class="mr-online-state">'+esc(onlineStatus==="running"?onlineProgress:onlineStatus==="done"?"اكتمل البحث · "+onlineResults.length+" نتيجة":onlineStatus==="error"?onlineProgress:"جاهز لبدء المسح بعد ضبط الاتصال")+'</span></div>'+
+      '<div class="mr-online-controls"><button class="mr-scan-button" id="mr-run-live-scan" type="button" '+(onlineStatus==="running"?"disabled":"")+'><b>'+(onlineStatus==="running"?"المسح جارٍ...":"ابدأ البحث الأونلاين الآن")+'</b></button><span class="mr-online-state">'+esc(onlineStatus==="running"?onlineProgress:onlineStatus==="done"?"اكتمل البحث · "+onlineResults.length+" نتيجة":onlineStatus==="error"?onlineProgress:"جاهز لبدء المسح المباشر")+'</span></div>'+
       (onlineLastScan?'<div class="mr-online-last">آخر تشغيل: '+esc(onlineLastScan)+'</div>':"")+
       (cards?'<div class="mr-online-results"><h3>نتائج المصادر المكتشفة</h3><div class="mr-online-grid">'+cards+'</div></div>':"")+
       '<div class="mr-scan-note"><b>حدود الدقة:</b> نتيجة البحث ليست عرض سعر مؤكدًا. السعر السابق والحالي والخصم ومدة العرض لا تظهر إلا إذا قدم المصدر بيانات صريحة قابلة للتحقق؛ لا يخمّن الرادار تاريخ انتهاء أو توافر مخزون. لا توجد مقارنة بين موديلات مختلفة.</div></div>';
   };
   async function runOnlineScan(){
-    const cfg=scanConfig();
-    if(!cfg.endpoint||!cfg.token){onlineStatus="error";onlineProgress="احفظ رابط Worker ورمز الوصول أولًا.";render();return;}
     onlineStatus="running";onlineResults=[];onlineProgress="جارٍ تجهيز المنتجات...";render();
     const products=allProducts.map(p=>({code:p.code,name:p.name||p.productName||p.title||"",brand:p.brand||"",model:p.model||"",category:p.category||"",type:arr("devices").some(x=>x.code===p.code)?"device":"consumable"}));
     try{
@@ -237,8 +226,8 @@
       for(let i=0;i<products.length;i+=batchSize){
         const batch=products.slice(i,i+batchSize);
         onlineProgress="تم فحص "+Math.min(i,products.length)+" من "+products.length+" منتجًا...";
-        const response=await fetch(cfg.endpoint.replace(/\/$/,"")+"/scan",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+cfg.token},body:JSON.stringify({products:batch,markets:["EG","CN"]})});
-        if(!response.ok)throw new Error("الخادم أعاد "+response.status+" — راجع إعدادات Worker ورمز الوصول.");
+        const response=await fetch(WORKER_ENDPOINT+"/scan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({products:batch,markets:["EG","CN"]})});
+        if(!response.ok){if(response.status===429)throw new Error("تم بلوغ حد البحث المؤقت من هذا الاتصال. انتظر دقيقة ثم أعد المحاولة.");throw new Error("تعذر الاتصال بمحرك البحث (HTTP "+response.status+").");}
         const payload=await response.json();
         if(!Array.isArray(payload.results))throw new Error("صيغة استجابة محرك الرصد غير صحيحة.");
         onlineResults=onlineResults.concat(payload.results);
@@ -292,12 +281,7 @@
     const goButton=e.target.closest("[data-radar-go]");
     if(goButton){go(goButton.dataset.radarGo);return;}
     const scanButton=e.target.closest("#mr-online-scan");
-    if(scanButton){const panel=$("#mr-online-scan-panel");if(panel){panel.scrollIntoView({behavior:"smooth",block:"start"});scanButton.classList.add("is-active");}const cfg=scanConfig();if(cfg.endpoint&&cfg.token)runOnlineScan();else{onlineStatus="error";onlineProgress="اضبط رابط محرك الرصد ورمز الوصول مرة واحدة، ثم اضغط الزر الأخضر لبدء المسح مباشرة.";render();}return;}
-    if(e.target.closest("#mr-save-config")){
-      const endpoint=$("#mr-worker-url")?.value.trim()||"",token=$("#mr-worker-token")?.value.trim()||"";
-      if(!/^https:\/\//i.test(endpoint)||!token){alert("أدخل رابط HTTPS ورمز الوصول.");return;}
-      saveScanConfig({endpoint,token});alert("تم حفظ إعدادات محرك الرصد على هذا الجهاز.");return;
-    }
+    if(scanButton){const panel=$("#mr-online-scan-panel");if(panel){panel.scrollIntoView({behavior:"smooth",block:"start"});scanButton.classList.add("is-active");}runOnlineScan();return;}
     if(e.target.closest("#mr-run-live-scan")){runOnlineScan();return;}
     const addPrice=e.target.closest("[data-mr-add-price]");
     if(addPrice){const code=addPrice.dataset.mrAddPrice;go("prices");openForm("prices");const select=$("#record-form [name='productCode']");if(select)select.value=code;return;}
