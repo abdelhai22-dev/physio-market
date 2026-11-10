@@ -13,6 +13,7 @@ const json = (data, status=200, origin="*") => new Response(JSON.stringify(data)
   status, headers: { "Content-Type":"application/json; charset=utf-8", ...corsHeaders(origin) }
 });
 const clean = value => String(value || "").replace(/[<>]/g,"").trim().slice(0,180);
+const safeHttpUrl = value => { try { const u=new URL(value); return ["http:","https:"].includes(u.protocol)?u.toString():""; } catch (_) { return ""; } };
 const hasPromo = text => /sale|discount|offer|special price|clearance|خصم|عرض خاص|تخفيض|وفر|بدلًا من|بدلا من/i.test(text);
 const priceFromText = text => {
   const patterns = [
@@ -57,7 +58,7 @@ async function searchOne(product, market, env) {
       marketLabel:market === "EG" ? "بحث السوق المصري" : "بحث الموردين العالميين / الصين",
       title:clean(item.title),
       description:clean(item.description),
-      url:item.url,
+      url:safeHttpUrl(item.url),
       age:item.age || null,
       observedAt:new Date().toISOString(),
       query:query,
@@ -94,11 +95,16 @@ export default {
       for (const market of markets) tasks.push({product,market});
     }
     const results=[];
+    const errors=[];
     for (let i=0;i<tasks.length;i+=3) {
       const chunk=tasks.slice(i,i+3);
       const settled=await Promise.allSettled(chunk.map(t=>searchOne(t.product,t.market,env)));
-      for (const item of settled) if(item.status==="fulfilled") results.push(...item.value);
+      for (const item of settled) {
+        if(item.status==="fulfilled") results.push(...item.value);
+        else errors.push(String(item.reason?.message || "Search request failed"));
+      }
     }
-    return json({ok:true,scannedProducts:products.length,results,scannedAt:new Date().toISOString()},200,env.ALLOWED_ORIGIN||origin);
+    if(!results.length && errors.length) return json({error:"Search provider failed: "+errors[0]},502,env.ALLOWED_ORIGIN||origin);
+    return json({ok:true,scannedProducts:products.length,results,partialErrors:errors.length,scannedAt:new Date().toISOString()},200,env.ALLOWED_ORIGIN||origin);
   }
 };
