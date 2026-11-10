@@ -2,13 +2,14 @@
  * PHYSIO MARKET — live market discovery Worker
  * GitHub deployment trigger: 2026-11-10
  * Provider: Tavily Search API (basic depth; normally one credit per query).
- * Required Cloudflare secrets: TAVILY_API_KEY, RADAR_ACCESS_TOKEN.
- * Never put either secret in browser code or GitHub.
+ * Required Cloudflare secret: TAVILY_API_KEY.
+ * Public no-login endpoint: protected by Cloudflare per-IP rate limiting.
+ * Never put the Tavily secret in browser code or GitHub.
  */
 const corsHeaders = origin => ({
   "Access-Control-Allow-Origin": origin || "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Headers": "Content-Type",
   "Vary": "Origin"
 });
 const json = (data, status=200, origin="*") => new Response(JSON.stringify(data), {
@@ -112,17 +113,28 @@ export default {
         ok:true,
         service:"physio-market-radar",
         provider:env.TAVILY_API_KEY?"configured":"missing_api_key",
-        accessToken:env.RADAR_ACCESS_TOKEN?"configured":"missing_access_token"
+        rateLimiter:env.RADAR_RATE_LIMITER?"configured":"missing_rate_limiter"
       },200,responseOrigin);
     }
     if (url.pathname !== "/scan" || request.method !== "POST") {
       return json({error:"Not found"},404,responseOrigin);
     }
-    if (!env.TAVILY_API_KEY || !env.RADAR_ACCESS_TOKEN) {
-      return json({error:"Worker secrets are not configured."},503,responseOrigin);
+    if (!env.TAVILY_API_KEY) {
+      return json({error:"Worker search secret is not configured."},503,responseOrigin);
     }
-    if (request.headers.get("Authorization") !== "Bearer " + env.RADAR_ACCESS_TOKEN) {
-      return json({error:"Unauthorized"},401,responseOrigin);
+    if (requestOrigin !== allowedOrigin) {
+      return json({error:"Origin not allowed"},403,allowedOrigin);
+    }
+    if (!env.RADAR_RATE_LIMITER) {
+      return json({error:"Rate limiter is not configured. Public search is disabled."},503,responseOrigin);
+    }
+    const clientIp = request.headers.get("CF-Connecting-IP") || "unknown";
+    const rate = await env.RADAR_RATE_LIMITER.limit({key:clientIp});
+    if (!rate.success) {
+      return new Response(JSON.stringify({error:"تم تجاوز حد البحث المؤقت. انتظر دقيقة ثم حاول مرة أخرى."}),{
+        status:429,
+        headers:{"Content-Type":"application/json; charset=utf-8","Retry-After":"60",...corsHeaders(responseOrigin)}
+      });
     }
     let body;
     try { body=await request.json(); }
