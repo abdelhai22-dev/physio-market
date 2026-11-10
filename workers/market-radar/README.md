@@ -29,19 +29,19 @@ Do not add secrets as plain Variables. Never commit the Tavily key to GitHub, pa
 ### Deploy
 This folder is the Worker project root. It contains `wrangler.toml` and `src/index.js`.
 
-If the Worker is linked to GitHub through Cloudflare Builds, set the root directory to `workers/market-radar` and use `npx wrangler deploy` as the deploy command. Otherwise, open the Worker in Cloudflare and deploy the contents of `src/index.js` using Edit code after setting the two secrets.
+If the Worker is linked to GitHub through Cloudflare Builds, set the root directory to `workers/market-radar` and use `npx wrangler deploy` as the deploy command. Otherwise, open the Worker in Cloudflare and deploy the contents of `src/index.js` after setting the `TAVILY_API_KEY` secret and configuring the `RADAR_RATE_LIMITER` binding.
 
 ## Test
 Open:
 
 `https://physio-market-radar.abdelhai22.workers.dev/health`
 
-A healthy configuration returns JSON with `ok: true`, `provider: "configured"`, and `accessToken: "configured"`. The health endpoint never returns secret values.
+A healthy configuration returns JSON with `ok: true`, `provider: "configured"`, and `rateLimiter: "configured"`. The health endpoint never returns secret values.
 
 Then open PHYSIO MARKET → رادار فرص السوق and press **ابدأ المسح الذكي للسوق**. The Worker URL is built into the site; no local settings, access token, email, or login are required.
 
 ## Security and operating limits
-- The Tavily key and radar token stay in Cloudflare Worker Secrets.
+- The Tavily key stays in Cloudflare Worker Secrets; no browser-side access token is used.
 - The browser stores no Worker URL, access token, or API key.
 - The Worker accepts at most eight products per request and processes two Tavily requests concurrently.
 - The Worker checks the configured allowed origin and applies an approximate Cloudflare rate limit of 10 scan requests per minute per client IP. A complete 45-product scan uses six sequential requests.
