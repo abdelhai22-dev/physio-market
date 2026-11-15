@@ -15,4 +15,17 @@ namespace_id = "2026111001"
 limit = 10
 period = 60
 
+# Branch Preview configuration. Keep Preview rate-limit counters separate
+# from Production by using a distinct namespace ID.
 [previews]
+
+[previews.vars]
+ALLOWED_ORIGIN = "https://abdelhai22-dev.github.io"
+
+[[previews.ratelimits]]
+name = "RADAR_RATE_LIMITER"
+namespace_id = "2026111502"
+
+[previews.ratelimits.simple]
+limit = 10
+period = 60
