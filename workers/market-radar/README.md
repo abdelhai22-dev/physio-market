@@ -16,22 +16,31 @@ Worker name: `physio-market-radar`
 Expected public URL:
 `https://physio-market-radar.abdelhai22.workers.dev`
 
-### Required secret and rate limit
-In Cloudflare Dashboard → Workers & Pages → `physio-market-radar` → Settings → Variables and Secrets:
+### Production configuration
+In Cloudflare Dashboard → Workers & Pages → `physio-market-radar` → Settings:
 
-1. Add a **Secret** named `TAVILY_API_KEY` and paste the Tavily Development key as its value.
-2. Keep the environment as **Production** (this is the Cloudflare deployment environment, not Tavily's paid Production key type).
-3. Keep `ALLOWED_ORIGIN` set to `https://abdelhai22-dev.github.io` as a regular variable.
-4. `RADAR_RATE_LIMITER` is declared in `wrangler.toml`: 10 scan requests per 60 seconds per client IP, enforced by Cloudflare's approximate regional rate-limiting API.
+1. Keep `TAVILY_API_KEY` as a **Secret** in Production.
+2. Keep `ALLOWED_ORIGIN` set to `https://abdelhai22-dev.github.io` as a regular variable.
+3. Production rate limit is configured in `wrangler.toml` as `RADAR_RATE_LIMITER`: 10 requests per 60 seconds per client IP.
 
-Do not add secrets as plain Variables. Never commit the Tavily key to GitHub, paste it into chat, or put it in browser JavaScript. The old `RADAR_ACCESS_TOKEN` secret is no longer used by this version and may be removed from Cloudflare after the new deployment is verified.
+### Worker Preview configuration
+Worker Previews do not inherit Production variables, secrets, or bindings. The `previews` block in `wrangler.toml` now explicitly configures:
+
+- `ALLOWED_ORIGIN` = `https://abdelhai22-dev.github.io`
+- `RADAR_RATE_LIMITER` namespace ID `1001`, with 60 requests per 60 seconds.
+
+In Cloudflare Dashboard → Worker → Settings → Variables and Secrets → **Previews Base**, add `TAVILY_API_KEY` again as a **Secret**, entering the existing Tavily key manually. Secret values cannot be copied from Production or stored in Git. Do not paste the key into GitHub or chat. The old `RADAR_ACCESS_TOKEN` secret is not used by this version.
+
+The dashboard Previews Base binding and the `previews` block in `wrangler.toml` must remain in sync. Do not change the Production namespace ID or Production limit when adjusting Preview settings.
 
 ### Deploy
 This folder is the Worker project root. It contains `wrangler.toml` and `src/index.js`.
 
-If the Worker is linked to GitHub through Cloudflare Builds, set the root directory to `workers/market-radar` and use `npx wrangler deploy` as the deploy command. Otherwise, open the Worker in Cloudflare and deploy the contents of `src/index.js` after setting the `TAVILY_API_KEY` secret and configuring the `RADAR_RATE_LIMITER` binding.
+For the production branch, use `npx wrangler deploy`. For a non-production branch Preview, use `npx wrangler preview` (Wrangler 4.135.0 or later). Do not use the production deploy command to test a feature branch.
 
-## Test
+If the Worker is linked to GitHub through Cloudflare Builds, configure the Preview command as `npx wrangler preview` and keep the Production deploy command as `npx wrangler deploy`.
+
+### Test
 Open:
 
 `https://physio-market-radar.abdelhai22.workers.dev/health`
@@ -44,7 +53,7 @@ Then open PHYSIO MARKET → رادار فرص السوق and press **ابدأ ا
 - The Tavily key stays in Cloudflare Worker Secrets; no browser-side access token is used.
 - The browser stores no Worker URL, access token, or API key.
 - The Worker accepts at most eight products per request and processes two Tavily requests concurrently.
-- The Worker checks the configured allowed origin and applies an approximate Cloudflare rate limit of 10 scan requests per minute per client IP. A complete 45-product scan uses six sequential requests.
+- Production applies an approximate Cloudflare rate limit of 10 scan requests per minute per client IP. Preview applies its separate configured limit of 60 requests per minute per client IP.
 - This is a public no-login endpoint: origin checks and approximate IP rate limits reduce casual misuse but are not authentication or a strict global quota. Anyone can technically call the public endpoint outside the website; monitor Worker and Tavily usage.
 - Do not run repeated full-catalog scans unnecessarily. Monitor Tavily usage and stop when the free monthly credits are exhausted; do not enable pay-as-you-go or a paid plan unless the owners explicitly approve it.
 - The Worker is not a price crawler and does not bypass logins, paywalls, anti-bot controls, or site restrictions.
