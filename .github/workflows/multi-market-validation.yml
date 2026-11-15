@@ -10,6 +10,7 @@ on:
       - 'vape.html'
       - 'tools-market.js'
       - 'vape-market.js'
+      - 'workers/market-radar/wrangler.toml'
       - 'tests/market-smoke.test.cjs'
       - 'markets.css'
       - 'sector.css'
@@ -35,6 +36,12 @@ jobs:
           node --check vape-market.js
       - name: Run market interaction smoke tests
         run: node tests/market-smoke.test.cjs
+      - name: Check Worker environment isolation
+        run: |
+          grep -F 'ALLOWED_ORIGIN = "https://abdelhai22-dev.github.io"' workers/market-radar/wrangler.toml
+          grep -F '[previews.vars]' workers/market-radar/wrangler.toml
+          grep -F 'ALLOWED_ORIGIN = "https://raw.githack.com"' workers/market-radar/wrangler.toml
+          grep -F 'PREVIEW_API="https://multi-market-review-physio-market-radar.abdelhai22.workers.dev/scan"' tools-market.js
       - name: Check local page assets and sector routes
         run: |
           python - <<'PY'
