@@ -221,6 +221,26 @@ async function testTools(hostname = "raw.githack.com") {
   );
 }
 
+async function testUnknownHostFailsClosed() {
+  const app = boot("tools-market.js", "preview.local");
+  const key = "as-tools-market-v1";
+  await app.click({ tab: "products" });
+  await app.click({ add: "product" });
+  await app.submit("product", {
+    name: "Test wrench",
+    model: "W-01",
+    category: "wrench",
+    brand: "Test",
+    country: "Egypt",
+    specs: "Synthetic test record",
+  });
+  await app.click({ tab: "radar" });
+  await app.click({ scan: "" });
+  assert.equal(app.fetchCalls, 0, "unknown hosting environments never call a Worker");
+  assert.ok(app.alerts.some((message) => message.includes("غير معرّف")));
+  assert.equal(app.data(key).radar.length, 0, "no scan result is fabricated");
+}
+
 async function testVape() {
   const app = boot("vape-market.js");
   const key = "as-vape-info-v1";
@@ -277,6 +297,7 @@ async function testVape() {
 (async () => {
   await testTools("raw.githack.com");
   await testTools("abdelhai22.github.io");
+  await testUnknownHostFailsClosed();
   await testVape();
   process.stdout.write("Market interaction smoke tests passed.\n");
 })().catch((error) => {
