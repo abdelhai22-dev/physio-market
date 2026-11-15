@@ -7,10 +7,24 @@ workers_dev = true
 ALLOWED_ORIGIN = "https://abdelhai22-dev.github.io"
 
 # Approximate per-IP protection for the public no-login scan endpoint.
+# Production: 10 requests per 60 seconds.
 [[ratelimits]]
 name = "RADAR_RATE_LIMITER"
 namespace_id = "2026111001"
 
 [ratelimits.simple]
 limit = 10
+period = 60
+
+# Worker Previews are isolated from Production. Keep their settings explicit.
+[previews.vars]
+ALLOWED_ORIGIN = "https://abdelhai22-dev.github.io"
+
+# Preview Base binding: 60 requests per 60 seconds.
+[[previews.ratelimits]]
+name = "RADAR_RATE_LIMITER"
+namespace_id = "1001"
+
+[previews.ratelimits.simple]
+limit = 60
 period = 60
