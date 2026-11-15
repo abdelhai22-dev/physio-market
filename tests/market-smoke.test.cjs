@@ -2,13 +2,14 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const vm = require("node:vm");
 
-function boot(file) {
+function boot(file, hostname = "raw.githack.com") {
   const source = fs.readFileSync(file, "utf8");
   const listeners = {};
   const storage = {};
   const alerts = [];
   const downloads = [];
   let fetchCalls = 0;
+  let fetchUrl = "";
 
   const app = {
     innerHTML: "",
@@ -62,6 +63,7 @@ function boot(file) {
 
   const sandbox = {
     document,
+    location: { hostname },
     localStorage: {
       getItem(key) {
         return storage[key] ?? null;
@@ -82,8 +84,9 @@ function boot(file) {
     setTimeout() {
       return 0;
     },
-    fetch: async () => {
+    fetch: async (url) => {
       fetchCalls += 1;
+      fetchUrl = String(url);
       return {
         ok: true,
         json: async () => ({
@@ -110,6 +113,9 @@ function boot(file) {
     downloads,
     get fetchCalls() {
       return fetchCalls;
+    },
+    get fetchUrl() {
+      return fetchUrl;
     },
     has(text) {
       return app.innerHTML.includes(text);
@@ -145,8 +151,8 @@ function boot(file) {
   };
 }
 
-async function testTools() {
-  const app = boot("tools-market.js");
+async function testTools(hostname = "raw.githack.com") {
+  const app = boot("tools-market.js", hostname);
   const key = "as-tools-market-v1";
 
   assert.ok(app.has("لوحة مؤشرات TOOLS MARKET"), "TOOLS dashboard renders");
@@ -198,6 +204,13 @@ async function testTools() {
   await app.click({ tab: "radar" });
   await app.click({ scan: "" });
   assert.equal(app.fetchCalls, 1, "scan button calls the Worker endpoint");
+  assert.equal(
+    app.fetchUrl,
+    hostname === "raw.githack.com"
+      ? "https://multi-market-review-physio-market-radar.abdelhai22.workers.dev/scan"
+      : "https://physio-market-radar.abdelhai22.workers.dev/scan",
+    "scan uses the Worker isolated for the current hosting environment"
+  );
   assert.equal(app.data(key).radar.length, 1, "scan result is persisted");
 
   await app.click({ save: "0" });
@@ -262,7 +275,8 @@ async function testVape() {
 }
 
 (async () => {
-  await testTools();
+  await testTools("raw.githack.com");
+  await testTools("abdelhai22.github.io");
   await testVape();
   process.stdout.write("Market interaction smoke tests passed.\n");
 })().catch((error) => {
