@@ -1,5 +1,5 @@
 (()=>{"use strict";
-const KEY="as-tools-market-v1",PRODUCTION_API="https://physio-market-radar.abdelhai22.workers.dev/scan",PREVIEW_API="https://multi-market-review-physio-market-radar.abdelhai22.workers.dev/scan",host=location.hostname,API=host==="raw.githack.com"?PREVIEW_API:host==="abdelhai22.github.io"?PRODUCTION_API:"",app=document.querySelector("#sector-app");
+const KEY="as-tools-market-v1",PRODUCTION_API="https://physio-market-radar.abdelhai22.workers.dev/scan",PREVIEW_API="https://multi-market-review-physio-market-radar.abdelhai22.workers.dev/scan",host=location.hostname,API=host==="raw.githack.com"?PREVIEW_API:host==="abdelhai22-dev.github.io"?PRODUCTION_API:"",app=document.querySelector("#sector-app");
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today=()=>new Date().toISOString().slice(0,10),uid=p=>p+"-"+Date.now().toString(36).toUpperCase()+"-"+Math.random().toString(36).slice(2,6).toUpperCase();
 let d={products:[],suppliers:[],sources:[],prices:[],radar:[]},tab="dashboard",formMode=null,editing=null,busy=false,query="";
