@@ -10,6 +10,7 @@ on:
       - 'vape.html'
       - 'tools-market.js'
       - 'vape-market.js'
+      - 'tests/market-smoke.test.cjs'
       - 'markets.css'
       - 'sector.css'
       - '.github/workflows/multi-market-validation.yml'
@@ -32,6 +33,8 @@ jobs:
         run: |
           node --check tools-market.js
           node --check vape-market.js
+      - name: Run market interaction smoke tests
+        run: node tests/market-smoke.test.cjs
       - name: Check local page assets and sector routes
         run: |
           python - <<'PY'
