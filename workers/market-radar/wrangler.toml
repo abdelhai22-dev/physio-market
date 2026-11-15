@@ -18,7 +18,7 @@ period = 60
 
 # Worker Previews are isolated from Production. Keep their settings explicit.
 [previews.vars]
-ALLOWED_ORIGIN = "https://abdelhai22-dev.github.io"
+ALLOWED_ORIGIN = "https://raw.githack.com"
 
 # Preview Base binding: 60 requests per 60 seconds.
 [[previews.ratelimits]]
