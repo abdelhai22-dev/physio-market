@@ -296,7 +296,7 @@ async function testVape() {
 
 (async () => {
   await testTools("raw.githack.com");
-  await testTools("abdelhai22.github.io");
+  await testTools("abdelhai22-dev.github.io");
   await testUnknownHostFailsClosed();
   await testVape();
   process.stdout.write("Market interaction smoke tests passed.\n");
