@@ -1,0 +1,69 @@
+name: Multi-market validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'physio.html'
+      - 'tools.html'
+      - 'vape.html'
+      - 'tools-market.js'
+      - 'vape-market.js'
+      - 'markets.css'
+      - 'sector.css'
+      - '.github/workflows/multi-market-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check tools-market.js
+          node --check vape-market.js
+      - name: Check local page assets and sector routes
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          from urllib.parse import urlsplit
+
+          class Links(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.refs = []
+              def handle_starttag(self, tag, attrs):
+                  attrs = dict(attrs)
+                  for key in ("href", "src"):
+                      value = attrs.get(key, "")
+                      if value:
+                          self.refs.append(value)
+
+          pages = ["index.html", "physio.html", "tools.html", "vape.html"]
+          for page in pages:
+              parser = Links()
+              parser.feed(Path(page).read_text(encoding="utf-8"))
+              for ref in parser.refs:
+                  parts = urlsplit(ref)
+                  if parts.scheme or ref.startswith(("#", "data:")):
+                      continue
+                  target = (Path(page).parent / parts.path).resolve()
+                  if parts.path and not target.exists():
+                      raise SystemExit(f"{page}: missing local asset {ref}")
+          home = Path("index.html").read_text(encoding="utf-8")
+          for route in ("./physio.html", "./tools.html", "./vape.html"):
+              if route not in home:
+                  raise SystemExit(f"Missing market route: {route}")
+          print("Market pages, routes, and local assets passed.")
+          PY
