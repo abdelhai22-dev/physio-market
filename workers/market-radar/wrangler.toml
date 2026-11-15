@@ -14,3 +14,5 @@ namespace_id = "2026111001"
 [ratelimits.simple]
 limit = 10
 period = 60
+
+[previews]
